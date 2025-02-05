@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { generateInvoicePDF } from "../../../../lib/generateInvoice";
 import { getServerSession } from "next-auth";
-import { authOptions } from "../auth/route";
+// import { authOptions } from "../auth/[...nextauth]/route";import { authOptions } from "../../../../lib/authOptions"
+import { authOptions } from "../../../../lib/authOptions"
 import { prisma } from "../../../../lib/prisma";
 import nodemailer from "nodemailer";
 
