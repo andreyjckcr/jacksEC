@@ -4,8 +4,8 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Image from "next/image";
+import { Button } from "../../../../components/ui/button";
 import { Navbar } from "../../../components/Navbar";
-import { Button } from "@/components/ui/button";
 import { toast } from "react-hot-toast";
 
 interface Product {
@@ -41,6 +41,10 @@ export default function ProductPage({ params }: { params: { id: string } }) {
 
     fetchProduct();
   }, [params.id]);
+
+  const handleGoBack = () => {
+    router.back();
+  };
 
   const handleAddToCart = async () => {
     if (!session) {
@@ -82,17 +86,33 @@ export default function ProductPage({ params }: { params: { id: string } }) {
             />
             <div className="p-6 bg-gray-50 rounded-lg shadow-md">
               <h1 className="text-3xl font-bold mb-4 text-gray-900">{product.NomArticulo}</h1>
-              <p className="text-lg text-gray-700 mb-4">Categoría: <span className="font-semibold">{product.categorias || "Sin Categoría"}</span></p>
+              <p className="text-lg text-gray-700 mb-4">
+                Categoría: <span className="font-semibold">{product.categorias || "Sin Categoría"}</span>
+              </p>
               <p className="text-xl font-semibold text-blue-600 mb-4">
                 ₡{typeof product.Precio === "number" ? product.Precio.toFixed(2) : "0.00"}
               </p>
-              <p className="text-gray-600 mb-4">Stock disponible: <span className="font-semibold">{product.stock}</span></p>
-              <Button 
-                onClick={handleAddToCart} 
-                className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 w-full"
-              >
-                Agregar al Carrito
-              </Button>
+              <p className="text-gray-600 mb-4">
+                Stock disponible: <span className="font-semibold">{product.stock}</span>
+              </p>
+  
+              {/* 🔹 Contenedor para los botones con distribución flexible */}
+              <div className="flex flex-col md:flex-row gap-4">
+                <Button
+                  onClick={handleGoBack}
+                  className="bg-gray-300 hover:bg-gray-400 text-black px-6 py-3 rounded-lg shadow-md transition-all w-full md:w-auto"
+                  size="lg"
+                >
+                  Regresar
+                </Button>
+  
+                <Button 
+                  onClick={handleAddToCart} 
+                  className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 w-full md:w-auto"
+                >
+                  Agregar al Carrito
+                </Button>
+              </div>
             </div>
           </div>
         </div>

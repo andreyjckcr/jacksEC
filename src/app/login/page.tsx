@@ -9,35 +9,39 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import Image from "next/image"
 
-export default function Login() {
-  const [email, setEmail] = useState("")
-  const [codigoEmpleado, setCodigoEmpleado] = useState("")
-  const router = useRouter()
+export default function LoginPage() {
+  const [email, setEmail] = useState("");
+  const [codigoEmpleado, setCodigoEmpleado] = useState("");
+  const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-
-    // Llamamos a NextAuth con las credenciales correctas
+    e.preventDefault();
     const result = await signIn("credentials", {
-      redirect: false,
       email,
-      codigo_empleado: codigoEmpleado, // Debe coincidir con el nombre en `route.ts`
-    })
+      codigo_empleado: codigoEmpleado,
+      redirect: false,
+    });
 
-    if (result?.error) {
-      console.log("❌ Error en login:", result.error)
-      toast.error("Credenciales incorrectas")
-      return
+    if (!result?.error) {
+      // ✅ Obtener la sesión para verificar el rol
+      const res = await fetch("/api/auth/session");
+      const session = await res.json();
+
+      console.log("🔍 Sesión obtenida:", session); // 👀 Revisar si el rol está presente
+
+      if (session.user?.rol === "administrador") {
+        router.push("/admin"); // 🚀 Redirigir a la página de administrador
+      } else if (session.user?.rol === "despachante") {
+        router.push("/despacho"); // 🚀 Redirigir a la página de despachante
+      } else {
+        router.push("/dashboard"); // 🚀 Redirigir al dashboard normal
+      }
+
+      toast.success("Inicio de sesión exitoso");
+    } else {
+      toast.error("Error en el inicio de sesión");
     }
-
-    // 🔥 Login exitoso
-    toast.success("Inicio de sesión exitoso!")
-
-    // 🔄 Redirigir al dashboard
-    setTimeout(() => {
-      router.push("/dashboard")
-    }, 2000)
-  }
+  };
 
   return (
     <div className="min-h-screen flex flex-col">

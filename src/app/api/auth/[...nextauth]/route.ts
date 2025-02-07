@@ -18,14 +18,19 @@ export const authOptions = {
         }
         const { email, codigo_empleado } = credentials;
 
-        // **Buscar usuario en la BD**
+        // **Verificar si el usuario existe en la BD**
         const user = await prisma.usuarios_ecommerce.findUnique({
           where: { codigo_empleado },
-          select: { id: true, nombre: true, correo: true, rol: true },
+          select: { id: true, nombre: true, correo: true, estado: true, rol: true }, // ✅ Incluir el rol
         });
 
         if (!user) {
           console.log("❌ Usuario no encontrado");
+          return null;
+        }
+
+        if (user.estado !== "Activo") {
+          console.log("❌ Usuario inactivo");
           return null;
         }
 
@@ -37,6 +42,7 @@ export const authOptions = {
         console.log(`✅ Usuario autenticado (${user.rol}): ${user.nombre}`);
         return {
           id: user.id.toString(),
+          codigo_empleado,
           name: user.nombre,
           email: user.correo,
           rol: user.rol, // ✅ Agregar el rol
@@ -47,13 +53,13 @@ export const authOptions = {
   callbacks: {
     async session({ session, token }: { session: any; token: any }) {
       session.user.id = token.id;
-      session.user.rol = token.rol; // ✅ Asegurar que el rol se pase correctamente
+      session.user.rol = token.rol; // ✅ Agregar el rol a la sesión
       return session;
     },
     async jwt({ token, user }: { token: any; user?: any }) {
       if (user) {
         token.id = user.id;
-        token.rol = user.rol; // ✅ Agregar el rol al token
+        token.rol = user.rol; // ✅ Guardar el rol en el token JWT
       }
       return token;
     },

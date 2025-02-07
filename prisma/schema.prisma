@@ -51,6 +51,7 @@ model usuarios_ecommerce {
   cedula               String                 @db.VarChar(20)
   notificaciones_push  Boolean?               @default(true, map: "DF__usuarios___notif__5629CD9C")
   notificaciones_email Boolean?               @default(true, map: "DF__usuarios___notif__571DF1D5")
+  rol                  String                 @default("comprador", map: "DF__usuarios_ec__rol__5AEE82B9") @db.VarChar(20)
   carrito_ec           carrito_ec[]
   historial_compras_ec historial_compras_ec[]
   pedidos_ec           pedidos_ec[]

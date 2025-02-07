@@ -27,6 +27,14 @@ export function Navbar() {
     fetchTotalSpent();
   }, []);
 
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat("es-CR", {
+      style: "decimal",
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(amount);
+  };
+
   return (
     <nav className="bg-white border-b shadow-sm">
       <div className="container mx-auto px-4">
@@ -56,12 +64,8 @@ export function Navbar() {
               </Tooltip>
             </TooltipProvider>
 
-            <span
-              className={`text-lg font-bold ${
-                totalGastado >= LIMITE_SEMANAL ? "text-red-500" : "text-blue-600"
-              }`}
-            >
-              ₡{totalGastado.toLocaleString()} / ₡{LIMITE_SEMANAL.toLocaleString()}
+            <span className={`text-lg font-bold ${totalGastado >= LIMITE_SEMANAL ? "text-red-500" : "text-blue-600"}`}>
+              ₡{formatCurrency(totalGastado)} / ₡{formatCurrency(LIMITE_SEMANAL)}
             </span>
           </div>
 
