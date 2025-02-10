@@ -46,7 +46,7 @@ export async function generateInvoicePDF(
     });
 
     // 📌 Total
-    page.drawText(`Total: ₡${total.toFixed(2)}`, { x: 50, y: yOffset - 30, size: 14, font: customFont });
+    page.drawText(`Total: CRC ${total.toFixed(2)}`, { x: 50, y: yOffset - 30, size: 14, font: customFont });
 
     // 📂 Guardar el PDF en memoria y devolverlo
     const pdfBytes = await pdfDoc.save();
