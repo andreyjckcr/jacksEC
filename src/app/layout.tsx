@@ -6,6 +6,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import type React from "react";
 import { CartProvider } from "./context/CartContext";
+import { Analytics } from "@vercel/analytics/react";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -21,6 +22,7 @@ export default function RootLayout({
           <CartProvider>
             {children}
             <Toaster position="top-right" />
+            <Analytics />
           </CartProvider>
         </SessionProvider>
       </body>
