@@ -39,7 +39,7 @@ export async function generateInvoicePDF(
     let yOffset = height - 220;
     cartItems.forEach((item, index) => {
       page.drawText(
-        `${index + 1}. ${item.productos_ec.NomArticulo} - ${item.cantidad} unidades - ₡${(Number(item.productos_ec.Precio) || 0).toFixed(2)}`,
+        `${index + 1}. ${item.productos_ec.NomArticulo} - ${item.cantidad} unidades - CRC${(Number(item.productos_ec.Precio) || 0).toFixed(2)}`,
         { x: 50, y: yOffset, size: 10, font: customFont }
       );
       yOffset -= 20;
