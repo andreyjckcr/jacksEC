@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { generateInvoicePDF } from "../../../../lib/generateInvoice";
 import { getServerSession } from "next-auth";
-// import { authOptions } from "../auth/[...nextauth]/route";import { authOptions } from "../../../../lib/authOptions"
-import { authOptions } from "../../../../lib/authOptions"
+import { authOptions } from "../../../../lib/authOptions";
 import { prisma } from "../../../../lib/prisma";
 import nodemailer from "nodemailer";
 
@@ -10,7 +9,7 @@ import nodemailer from "nodemailer";
 const transporter = nodemailer.createTransport({
   host: "smtp.office365.com",
   port: 587,
-  secure: false, // STARTTLS (debe ser `false`)
+  secure: false,
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS,
@@ -20,8 +19,10 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-// ✅ Enviar correo de confirmación
-async function sendConfirmationEmail(email: string, nombre: string, transactionId: string, pdfUrl: string, total: number) {
+// ✅ Enviar correo de confirmación con la factura PDF
+async function sendConfirmationEmail(email: string, nombre: string, transactionId: string, pdfFileName: string, total: number) {
+  const fullPdfUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/invoices/${pdfFileName}`;
+
   const mailOptions = {
     from: process.env.EMAIL_USER,
     to: email,
@@ -32,7 +33,7 @@ async function sendConfirmationEmail(email: string, nombre: string, transactionI
       <p><strong>ID de la transacción:</strong> ${transactionId}</p>
       <p><strong>Total pagado:</strong> ₡${total.toFixed(2)}</p>
       <p>Puedes descargar tu factura desde el siguiente enlace:</p>
-      <a href="${process.env.NEXT_PUBLIC_SITE_URL}${pdfUrl}" target="_blank">Descargar Factura</a>
+      <a href="${fullPdfUrl}" target="_blank">Descargar Factura</a>
       <p>Gracias por confiar en Jack's!</p>
     `,
   };
@@ -64,11 +65,10 @@ export async function POST(req: NextRequest) {
       where: {
         id_usuario: userId,
         fecha_hora: { gte: startOfWeek },
-        estado: { in: ["Pedido realizado", "Pedido en proceso"] }, // ✅ Solo cuenta estos estados
+        estado: { in: ["Pedido realizado", "Pedido en proceso"] },
       },
       _sum: { total: true },
     });
-    
 
     const montoGastado = Number(totalGastado._sum.total) || 0;
     const totalCompra = Number(total) || 0;
@@ -83,7 +83,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({
         error: `Con esta compra superas el límite semanal de ₡12,000. Has gastado ₡${montoGastado.toFixed(2)} esta semana. Reduce la cantidad o cambia los artículos.`,
       }, { status: 400 });
-    }    
+    }
 
     // ✅ Obtener datos del usuario
     const user = await prisma.usuarios_ecommerce.findUnique({
@@ -98,40 +98,26 @@ export async function POST(req: NextRequest) {
     // 📂 Generar la factura PDF
     const pdfUrl = await generateInvoicePDF(transaction_id, cartItems, total, user.nombre, userId, "Desconocido", "Online");
 
-    // ✅ Guardar la compra en la base de datos con estado inicial "Pedido realizado"
+    // ✅ Guardar solo el nombre del archivo en la BD
+    const pdfFileName = pdfUrl.split("/").pop();
+
     const nuevaCompra = await prisma.historial_compras_ec.create({
       data: {
         id_usuario: userId,
         transaction_id,
-        invoice: pdfUrl,
+        invoice: pdfFileName, // ⬅️ Guarda solo el nombre del archivo en lugar de la URL completa
         fecha_hora: new Date(),
         device: "Desconocido",
         location: "Online",
         total,
-        estado: "Pedido realizado", // 🚀 Estado inicial
+        estado: "Pedido realizado",
         metodo_pago: "Deducción de Planilla",
       },
     });
 
     // 📌 Insertar productos comprados
-    interface CartItem {
-      id_producto: number;
-      cantidad: number;
-    }
-
-    interface User {
-      nombre: string;
-      correo: string;
-    }
-
-    interface TotalGastado {
-      _sum: {
-        total: number | null;
-      };
-    }
-
     await Promise.all(
-      cartItems.map(async (item: CartItem) => {
+      cartItems.map(async (item) => {
         await prisma.productos_comprados.create({
           data: {
             id_historial: nuevaCompra.id,
@@ -145,8 +131,8 @@ export async function POST(req: NextRequest) {
     // ✅ Eliminar el carrito del usuario
     await prisma.carrito_ec.deleteMany({ where: { id_usuario: userId } });
 
-    // ✅ Enviar Correo de Confirmación
-    await sendConfirmationEmail(user.correo, user.nombre, transaction_id, pdfUrl, total);
+    // ✅ Enviar Correo de Confirmación con el PDF
+    await sendConfirmationEmail(user.correo, user.nombre, transaction_id, pdfFileName, total);
 
     return NextResponse.json({ transaction_id, pdfUrl }, { status: 200 });
 
