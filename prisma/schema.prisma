@@ -3,103 +3,105 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlserver"
   url      = env("DATABASE_URL")
 }
 
 model detalle_pedido_ec {
-  id          Int        @id @default(autoincrement())
+  id          Int        @id(map: "PK__detalle___3213E83F5103D370") @default(autoincrement())
   id_pedido   Int
-  id_producto String     
+  id_producto String     @db.VarChar(20)
   cantidad    Int
-  precio      Decimal    
-  subtotal    Decimal?   
-  pedidos_ec  pedidos_ec @relation(fields: [id_pedido], references: [id], onUpdate: NoAction)
+  precio      Decimal    @db.Decimal(10, 2)
+  subtotal    Decimal?   @db.Decimal(21, 2)
+  pedidos_ec  pedidos_ec @relation(fields: [id_pedido], references: [id], onUpdate: NoAction, map: "FK__detalle_p__id_pe__3E52440B")
 }
 
 model facturacion_ec {
-  id          Int          @id @default(autoincrement())
-  id_pedido   Int
-  total       Decimal      
-  fecha       DateTime?    @default(now())
-  estado      String       
-  pedidos_ec  pedidos_ec   @relation(fields: [id_pedido], references: [id], onUpdate: NoAction)
+  id                                               Int          @id(map: "PK__facturac__3213E83FAAEE544A") @default(autoincrement())
+  id_pedido                                        Int
+  total                                            Decimal      @db.Decimal(10, 2)
+  fecha                                            DateTime?    @default(now(), map: "DF__facturaci__fecha__38996AB5") @db.DateTime
+  estado                                           String       @db.VarChar(20)
+  pedidos_ec_facturacion_ec_id_pedidoTopedidos_ec  pedidos_ec   @relation("facturacion_ec_id_pedidoTopedidos_ec", fields: [id_pedido], references: [id], onUpdate: NoAction, map: "FK__facturaci__id_pe__3A81B327")
+  pedidos_ec_pedidos_ec_id_facturaTofacturacion_ec pedidos_ec[] @relation("pedidos_ec_id_facturaTofacturacion_ec")
 }
 
 model pedidos_ec {
-  id          Int                   @id @default(autoincrement())
-  id_usuario  Int
-  fecha       DateTime?              @default(now())
-  estado      String  
-  id_factura  Int?
-  detalle_pedido_ec detalle_pedido_ec[]
-  facturacion_ec facturacion_ec? @relation(fields: [id_factura], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  usuarios_ecommerce usuarios_ecommerce  @relation(fields: [id_usuario], references: [id], onUpdate: NoAction)
+  id                                                   Int                 @id(map: "PK__pedidos___3213E83FAAB4325B") @default(autoincrement())
+  id_usuario                                           Int
+  fecha                                                DateTime?           @default(now(), map: "DF__pedidos_e__fecha__33D4B598") @db.DateTime
+  estado                                               String              @db.VarChar(20)
+  id_factura                                           Int?
+  detalle_pedido_ec                                    detalle_pedido_ec[]
+  facturacion_ec_facturacion_ec_id_pedidoTopedidos_ec  facturacion_ec[]    @relation("facturacion_ec_id_pedidoTopedidos_ec")
+  usuarios_ecommerce                                   usuarios_ecommerce  @relation(fields: [id_usuario], references: [id], onUpdate: NoAction, map: "FK__pedidos_e__id_us__35BCFE0A")
+  facturacion_ec_pedidos_ec_id_facturaTofacturacion_ec facturacion_ec?     @relation("pedidos_ec_id_facturaTofacturacion_ec", fields: [id_factura], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_Pedidos_Facturacion")
 }
 
 model usuarios_ecommerce {
-  id                   Int       @id @default(autoincrement())
-  codigo_empleado      String    @unique
-  nombre               String    
-  correo               String    @unique
-  telefono             String?   
-  direccion            String?   
-  fecha_registro       DateTime? @default(now())
-  estado               String?   @default("Activo")
-  cedula               String    
-  notificaciones_push  Boolean?  @default(true)
-  notificaciones_email Boolean?  @default(true)
-  rol                  String    @default("comprador")
+  id                   Int                    @id(map: "PK__usuarios__3213E83FF7548599") @default(autoincrement())
+  codigo_empleado      String                 @unique(map: "UQ__usuarios__CDEF1DDFE0F1A019") @db.VarChar(10)
+  nombre               String                 @db.VarChar(100)
+  correo               String                 @unique(map: "UQ__usuarios__2A586E0BB5417B56") @db.VarChar(100)
+  telefono             String?                @db.VarChar(20)
+  direccion            String?                @db.VarChar(255)
+  fecha_registro       DateTime?              @default(now(), map: "DF__usuarios___fecha__267ABA7A") @db.DateTime
+  estado               String?                @default("Activo", map: "DF__usuarios___estad__276EDEB3") @db.VarChar(20)
+  cedula               String                 @db.VarChar(20)
+  notificaciones_push  Boolean?               @default(true, map: "DF__usuarios___notif__5629CD9C")
+  notificaciones_email Boolean?               @default(true, map: "DF__usuarios___notif__571DF1D5")
+  rol                  String                 @default("comprador", map: "DF__usuarios_ec__rol__5AEE82B9") @db.VarChar(20)
   carrito_ec           carrito_ec[]
   historial_compras_ec historial_compras_ec[]
   pedidos_ec           pedidos_ec[]
 }
 
 model productos_ec {
-  Id                  Int      @id @default(autoincrement())
-  CodArticulo         String   
-  NomArticulo         String   
-  Precio              Decimal  
-  PrecioImpuesto      Decimal  
-  image_url           String?  
-  CodCabys            String   
+  Id                  Int                   @id(map: "PK__producto__3214EC076EC9F8F4") @default(autoincrement())
+  CodArticulo         String                @db.VarChar(50)
+  NomArticulo         String                @db.VarChar(255)
+  Precio              Decimal               @db.Decimal(10, 2)
+  PrecioImpuesto      Decimal               @db.Decimal(10, 2)
+  image_url           String?               @db.VarChar(255)
+  CodCabys            String                @db.VarChar(20)
   stock               Int
-  categorias          String?  
+  categorias          String?               @db.VarChar(50)
   carrito_ec          carrito_ec[]
   productos_comprados productos_comprados[]
 }
 
 model carrito_ec {
-  id                 Int                @id @default(autoincrement())
+  id                 Int                @id(map: "PK__carrito___3213E83FD6BCBB7A") @default(autoincrement())
   id_usuario         Int
   id_producto        Int
   cantidad           Int
-  fecha_agregado     DateTime?          @default(now())
-  productos_ec       productos_ec       @relation(fields: [id_producto], references: [Id], onUpdate: NoAction)
-  usuarios_ecommerce usuarios_ecommerce @relation(fields: [id_usuario], references: [id], onUpdate: NoAction)
+  fecha_agregado     DateTime?          @default(now(), map: "DF__carrito_e__fecha__44FF419A") @db.DateTime
+  productos_ec       productos_ec       @relation(fields: [id_producto], references: [Id], onUpdate: NoAction, map: "FK__carrito_e__id_pr__46E78A0C")
+  usuarios_ecommerce usuarios_ecommerce @relation(fields: [id_usuario], references: [id], onUpdate: NoAction, map: "FK__carrito_e__id_us__45F365D3")
 }
 
 model historial_compras_ec {
-  id                  Int      @id @default(autoincrement())
+  id                  Int                   @id(map: "PK__historia__3213E83FC23AB90F") @default(autoincrement())
   id_usuario          Int
-  transaction_id      String   @default(gen_random_uuid()) 
-  invoice             String  
-  fecha_hora          DateTime?  @default(now())
-  device              String?  
-  location            String?  
-  total               Decimal  
-  estado              String   
-  metodo_pago         String   @default("Deducción de Planilla")
-  factura_url         String?  
-  usuarios_ecommerce  usuarios_ecommerce @relation(fields: [id_usuario], references: [id], onUpdate: NoAction)
+  transaction_id      String                @default("newid()", map: "DF__historial__transaction_id") @db.VarChar(50)
+  invoice             String                @db.NVarChar(255)
+  fecha_hora          DateTime?             @default(now(), map: "DF__historial__fecha__4BAC3F29") @db.DateTime
+  device              String?               @db.NVarChar(255)
+  location            String?               @db.NVarChar(255)
+  total               Decimal               @db.Decimal(10, 2)
+  estado              String                @db.VarChar(50)
+  metodo_pago         String                @default("Deducción de Planilla", map: "DF__historial__metod__4E88ABD4") @db.NVarChar(100)
+  factura_url         String?               @db.NVarChar(255)
+  usuarios_ecommerce  usuarios_ecommerce    @relation(fields: [id_usuario], references: [id], onUpdate: NoAction, map: "FK__historial__id_us__4F7CD00D")
   productos_comprados productos_comprados[]
 }
 
 model productos_comprados {
-  id                   Int      @id @default(autoincrement())
+  id                   Int                  @id(map: "PK__producto__3213E83F51185642") @default(autoincrement())
   id_historial         Int
   id_producto          Int
-  cantidad             Int      @default(1)
-  historial_compras_ec historial_compras_ec @relation(fields: [id_historial], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  productos_ec         productos_ec @relation(fields: [id_producto], references: [Id], onDelete: Cascade, onUpdate: NoAction)
+  cantidad             Int                  @default(1, map: "DF__productos__canti__534D60F1")
+  historial_compras_ec historial_compras_ec @relation(fields: [id_historial], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK__productos__id_hi__5441852A")
+  productos_ec         productos_ec         @relation(fields: [id_producto], references: [Id], onDelete: Cascade, onUpdate: NoAction, map: "FK__productos__id_pr__5535A963")
 }
