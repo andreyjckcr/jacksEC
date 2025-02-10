@@ -1,22 +1,5 @@
-import { PDFDocument, rgb } from "pdf-lib";
+import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
 import fontkit from "@pdf-lib/fontkit";
-import fs from "fs";
-import path from "path";
-
-// ✅ Función mejorada para detectar dispositivo desde el User-Agent
-function detectDevice(userAgent: string | undefined): string {
-  if (!userAgent) return "Desconocido";
-
-  const ua = userAgent.toLowerCase();
-
-  if (/android/.test(ua)) return "Android";
-  if (/iphone|ipad|ipod/.test(ua)) return "iOS";
-  if (/win/.test(ua)) return "Windows";
-  if (/mac/.test(ua)) return "MacOS";
-  if (/linux/.test(ua)) return "Linux";
-
-  return "Desconocido";
-}
 
 export async function generateInvoicePDF(
   transaction_id: string,
@@ -28,28 +11,16 @@ export async function generateInvoicePDF(
   location: string
 ) {
   try {
-    const invoicesDir = path.join(process.cwd(), "public", "invoices");
-
-    if (!fs.existsSync(invoicesDir)) {
-      fs.mkdirSync(invoicesDir, { recursive: true });
-    }
-
-    const filePath = path.join(invoicesDir, `${transaction_id}.pdf`);
     const pdfDoc = await PDFDocument.create();
-
     pdfDoc.registerFontkit(fontkit);
 
     const page = pdfDoc.addPage([600, 500]);
     const { width, height } = page.getSize();
 
-    // ✅ Cargar la fuente Roboto
-    const fontPath = path.join(process.cwd(), "public", "fonts", "Roboto-Regular.ttf");
-    const fontBytes = fs.readFileSync(fontPath);
-    const customFont = await pdfDoc.embedFont(fontBytes);
+    // ✅ Establecer una fuente base (sin leer archivos)
+    const customFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
 
-    const device = detectDevice(userAgent);
-
-    // 📌 Datos de la Factura
+    // 📌 Encabezado de la Factura
     page.drawText("Factura de Compra", { x: 50, y: height - 50, size: 18, font: customFont, color: rgb(0, 0, 0) });
 
     page.drawText(`Número de Factura: ${transaction_id}`, { x: 50, y: height - 80, size: 12, font: customFont });
@@ -61,12 +32,11 @@ export async function generateInvoicePDF(
     // 📌 Método de Pago
     page.drawText("Método de Pago: Deducción de Planilla", { x: 50, y: height - 160, size: 12, font: customFont });
 
-    // 📌 Información del Dispositivo y Ubicación
-    page.drawText(`Dispositivo: ${device}`, { x: 50, y: height - 190, size: 12, font: customFont });
-    page.drawText(`Ubicación: ${location || "Online"}`, { x: 50, y: height - 210, size: 12, font: customFont });
+    // 📌 Dispositivo y Ubicación
+    page.drawText(`Ubicación: ${location || "Online"}`, { x: 50, y: height - 190, size: 12, font: customFont });
 
     // 📌 Agregar Productos
-    let yOffset = height - 250;
+    let yOffset = height - 220;
     cartItems.forEach((item, index) => {
       page.drawText(
         `${index + 1}. ${item.productos_ec.NomArticulo} - ${item.cantidad} unidades - ₡${(Number(item.productos_ec.Precio) || 0).toFixed(2)}`,
@@ -78,11 +48,11 @@ export async function generateInvoicePDF(
     // 📌 Total
     page.drawText(`Total: ₡${total.toFixed(2)}`, { x: 50, y: yOffset - 30, size: 14, font: customFont });
 
-    // 📂 Guardar el PDF en el servidor
+    // 📂 Guardar el PDF en memoria y devolverlo
     const pdfBytes = await pdfDoc.save();
-    fs.writeFileSync(filePath, pdfBytes);
+    const pdfBase64 = Buffer.from(pdfBytes).toString("base64");
 
-    return `/invoices/${transaction_id}.pdf`;
+    return `data:application/pdf;base64,${pdfBase64}`;
   } catch (error) {
     console.error("❌ Error generando PDF:", error);
     throw new Error("No se pudo generar el PDF.");
