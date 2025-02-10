@@ -6,6 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "postinstall": "prisma generate",
     "lint": "next lint",
     "db:pull:dev": "env-cmd -f ./enviromentVariables/.env.development npx prisma db pull",
     "db:generate:dev": "env-cmd -f ./enviromentVariables/.env.development npx prisma generate"
