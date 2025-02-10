@@ -4,9 +4,9 @@ import { useState } from "react";
 import Link from "next/link";
 import { ShoppingCart, User, Menu, Search, Bell } from "lucide-react";
 import Image from "next/image";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../../../components/ui/tooltip";
+import { Sheet, SheetContent, SheetTrigger } from "../../../components/ui/sheet";
+import { Button } from "../../../components/ui/button";
 
 export function Navbar() {
   const [searchTerm, setSearchTerm] = useState("");

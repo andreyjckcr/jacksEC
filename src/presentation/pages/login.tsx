@@ -1,7 +1,7 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
+import { Input } from "../../../components/ui/input"
+import { Button } from "../../../components/ui/button"
 import { toast } from "react-hot-toast"
 
 export default function Login() {
@@ -59,8 +59,10 @@ export default function Login() {
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">Iniciar Sesión</h2>
         </div>
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+          <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+            Correo Electrónico
+          </label>
           <Input
-            label="Correo Electrónico"
             id="email"
             name="email"
             type="email"
@@ -68,8 +70,10 @@ export default function Login() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
           />
+          <label htmlFor="employeeCode" className="block text-sm font-medium text-gray-700">
+            Código de Empleado
+          </label>
           <Input
-            label="Código de Empleado"
             id="employeeCode"
             name="employeeCode"
             type="text"

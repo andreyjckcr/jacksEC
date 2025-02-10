@@ -1,11 +1,11 @@
 "use client"
 
 import Image from "next/image"
-import { Button } from "@/components/ui/button"
-import { useCart } from "@/app/context/CartContext"
+import { Button } from "../../components/ui/button"
+import { useCart } from "../app/context/CartContext"
 import { toast } from "react-hot-toast"
 import Link from "next/link"
-import type { Product } from "@/app/data/productsMockData"
+import type { Product } from "../app/data/productsMockData"
 
 interface ProductCardProps {
   product: Product

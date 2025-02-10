@@ -49,7 +49,7 @@ export async function GET(req: NextRequest) {
     interface CompraConProductos {
       id: number;
       id_usuario: number;
-      fecha_hora: Date;
+      fecha_hora: Date | null;
       factura_url: string | null;
       productos: ProductoComprado[];
     }
@@ -64,7 +64,7 @@ export async function GET(req: NextRequest) {
     interface HistorialCompraDB {
       id: number;
       id_usuario: number;
-      fecha_hora: Date;
+      fecha_hora: Date | null;
       invoice: string | null;
       productos_comprados: ProductoCompradoDB[];
     }

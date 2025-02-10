@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Image from "next/image";
 import { Navbar } from "../../components/Navbar";
-import { Button } from "@/components/ui/button";
+import { Button } from "../../../components/ui/button";
 import toast from "react-hot-toast";
 
 interface CartItem {

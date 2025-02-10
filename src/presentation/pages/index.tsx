@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react"
-import { Navbar } from "@/presentation/components/Navbar"
-import { ProductCard } from "@/presentation/components/ProductCard"
-import { productService } from "@/infrastructure/services/productService"
-import type { Product } from "@/domain/models/Product"
+import { Navbar } from "../../presentation/components/Navbar"
+import { ProductCard } from "../../presentation/components/ProductCard"
+import { productService } from "../../infrastructure/services/productService"
+import type { Product } from "../../domain/models/Product"
 
 export default function Home() {
   const [products, setProducts] = useState<Product[]>([])

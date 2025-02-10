@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { Button } from "@/components/ui/button";
+import { Button } from "../../../components/ui/button";
 import { toast } from "react-hot-toast";
 import Link from "next/link";
 import { X } from "lucide-react";

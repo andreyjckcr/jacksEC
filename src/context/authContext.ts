@@ -1,5 +1,5 @@
 import { create } from "zustand"
-import type { User } from "@/domain/models/User"
+import type { User } from "../domain/models/User"
 
 interface AuthState {
   user: User | null

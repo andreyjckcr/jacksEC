@@ -1,4 +1,4 @@
-import type { User } from "@/domain/models/User"
+import type { User } from "../../domain/models/User"
 
 // Datos de ejemplo
 const users: User[] = [

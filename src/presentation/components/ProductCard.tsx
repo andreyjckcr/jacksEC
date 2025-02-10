@@ -1,5 +1,5 @@
-import type { Product } from "@/domain/models/Product"
-import { useCartStore } from "@/context/cartContext"
+import type { Product } from "../../domain/models/Product"
+import { useCartStore } from "../../context/cartContext"
 import { Button } from "./Button"
 import Image from "next/image"
 import Link from "next/link"

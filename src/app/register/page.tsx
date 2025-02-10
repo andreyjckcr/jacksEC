@@ -3,12 +3,12 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+import { Button } from "../../../components/ui/button"
+import { Input } from "../../../components/ui/input"
 import toast from "react-hot-toast"
 import Image from "next/image"
-import { registerUser } from "@/lib/registerUser";
-import { Label } from "@/components/ui/label"
+import { registerUser } from "../../../lib/registerUser";
+import { Label } from "../../../components/ui/label"
 
 export default function Register() {
   const [employeeCode, setEmployeeCode] = useState("")

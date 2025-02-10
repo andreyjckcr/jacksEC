@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Navbar } from "../../components/Navbar";
-import { Button } from "@/components/ui/button";
+import { Button } from "../../../components/ui/button";
 import toast from "react-hot-toast";
 
 export default function NotificationSettings() {

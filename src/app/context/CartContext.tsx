@@ -35,7 +35,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [items])
 
   const addToCart = (product: Product, quantity: number) => {
-    let addedItem: CartItem
+    let addedItem: CartItem = { ...product, quantity }
     setItems((prevItems) => {
       const existingItem = prevItems.find((item) => item.nombre === product.nombre)
       if (existingItem) {
