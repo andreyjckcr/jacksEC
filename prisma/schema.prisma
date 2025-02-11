@@ -58,12 +58,13 @@ model usuarios_ecommerce {
 }
 
 model productos_ec {
-  Id          Int    @id(map: "PK_productos_ec")
-  CodArticulo Int
-  NomArticulo String @db.VarChar(255)
-  Precio      Int
-  categorias  String @db.VarChar(100)
-  image_url   String @db.VarChar(255)
+  Id                  Int                   @id(map: "PK_productos_ec")
+  CodArticulo         Int
+  NomArticulo         String                @db.VarChar(255)
+  Precio              Int
+  categorias          String                @db.VarChar(100)
+  image_url           String                @db.VarChar(255)
+  productos_comprados productos_comprados[]
 }
 
 model carrito_ec {
@@ -97,6 +98,7 @@ model productos_comprados {
   id_producto          Int
   cantidad             Int                  @default(1, map: "DF__productos__canti__534D60F1")
   historial_compras_ec historial_compras_ec @relation(fields: [id_historial], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK__productos__id_hi__5441852A")
+  productos_ec         productos_ec         @relation(fields: [id_producto], references: [Id], onDelete: Cascade, onUpdate: NoAction, map: "FK_productos_comprados_productos_ec")
 }
 
 model sysdiagrams {
