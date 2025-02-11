@@ -75,24 +75,17 @@ export async function POST(req: NextRequest) {
       where: {
         id_usuario: userId,
         fecha_hora: { gte: startOfWeek },
-        estado: { in: ["Pedido realizado", "Pedido en proceso"] }, // ✅ Solo cuenta estos estados
+        estado: { in: ["Pedido realizado", "Pedido en proceso"] },
       },
       _sum: { total: true },
     });
-
-    console.log("🔍 [DEBUG] Datos obtenidos de la BD en PRODUCCIÓN:", totalGastado);
 
     const montoGastado = Number(totalGastado._sum.total) || 0;
     const totalCompra = Number(total) || 0;
     const totalProyectado = montoGastado + totalCompra;
 
-    console.log(`🟢 Monto gastado en PRODUCCIÓN: ₡${montoGastado}`);
-    console.log(`🛒 Total de esta compra: ₡${totalCompra}`);
-    console.log(`🔴 Monto total proyectado: ₡${totalProyectado}`);
-
-    // ✅ Validar límite de ₡12,000 y detener la compra si lo supera
+    // ✅ Validar límite de ₡12,000
     if (totalProyectado > 12000) {
-      console.log("🚨 [ERROR] COMPRA RECHAZADA en PRODUCCIÓN: Supera el límite de ₡12,000");
       return NextResponse.json({
         error: `No puedes realizar esta compra porque superarías el límite semanal de ₡12,000. Ya has gastado ₡${montoGastado.toFixed(2)}.`,
       }, { status: 400 });
@@ -100,11 +93,8 @@ export async function POST(req: NextRequest) {
 
     // 📂 Generar la factura PDF
     const pdfUrl = await generateInvoicePDF(transaction_id, cartItems, total, user.nombre, userId, "Desconocido", "Online");
-
-    // ✅ Extraer solo el nombre del archivo
     const pdfFileName = pdfUrl.split("/").pop() || "";
 
-    // 📌 Evitar que supere el límite de la BD
     if (pdfFileName.length > 255) {
       return NextResponse.json({ error: "El nombre del archivo PDF es demasiado largo" }, { status: 500 });
     }
@@ -114,7 +104,7 @@ export async function POST(req: NextRequest) {
       data: {
         id_usuario: userId,
         transaction_id,
-        invoice: pdfFileName, // ⬅️ Guarda solo el nombre del archivo
+        invoice: pdfFileName,
         fecha_hora: new Date(),
         device: "Desconocido",
         location: "Online",
@@ -124,7 +114,9 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    // 📌 Insertar productos comprados
+    console.log("✅ Compra guardada en la BD:", nuevaCompra);
+
+    // 📌 Insertar productos comprados en `productos_comprados`
     interface CartItem {
       id_producto: number;
       cantidad: number;
@@ -145,7 +137,9 @@ export async function POST(req: NextRequest) {
       id: number;
     }
 
-    // ✅ Eliminar el carrito del usuario
+    console.log("✅ Productos de la compra guardados en `productos_comprados`");
+
+    // ✅ Eliminar el carrito del usuario después de la compra
     await prisma.carrito_ec.deleteMany({ where: { id_usuario: userId } });
 
     // ✅ Enviar Correo de Confirmación con la factura PDF
@@ -158,4 +152,3 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Error al procesar la compra" }, { status: 500 });
   }
 }
-

@@ -1,15 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 import { getServerSession } from "next-auth";
-// import { authOptions } from "../auth/[...nextauth]/route";
-import { authOptions } from "../../../../lib/authOptions"
+import { authOptions } from "../../../../lib/authOptions";
 
 const prisma = new PrismaClient();
-
-type CartItem = {
-  id_producto: number;
-  cantidad: number;
-};
 
 export async function GET(req: NextRequest) {
   const session = await getServerSession(authOptions);
@@ -28,63 +22,46 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Usuario no encontrado" }, { status: 404 });
     }
 
-    // ✅ Obtener historial de compras con productos
-    const nuevaCompra = await prisma.historial_compras_ec.create({
-      data: {
+    // ✅ Obtener historial de compras válidas con productos asociados
+    const historialCompras = await prisma.historial_compras_ec.findMany({
+      where: {
         id_usuario: user.id,
-        invoice: "default_invoice", // replace with actual invoice value
-        total: 0, // replace with actual total value
-        estado: "pending", // replace with actual estado value
+        total: { gt: 0 }, // 🔹 Solo mostrar compras con monto mayor a 0 (evita compras fallidas)
       },
-    });
-
-    const cartItems: CartItem[] = []; // Define cartItems with appropriate values
-
-    await Promise.all(
-      cartItems.map(async (item: CartItem) => {
-        await prisma.productos_comprados.create({
-          data: {
-            id_historial: nuevaCompra.id,
-            id_producto: item.id_producto,
-            cantidad: item.cantidad,
-          },
-        });
-      })
-    );
-    
-    // 📌 DEBUG para verificar que los productos fueron guardados
-    const productosGuardados = await prisma.productos_comprados.findMany({
-      where: { id_historial: nuevaCompra.id },
-    });
-    console.log("✅ Productos guardados en la compra:", productosGuardados);
-
-    // ✅ Obtener historial de compras exitosas con productos
-const historialCompras = await prisma.historial_compras_ec.findMany({
-  where: {
-    id_usuario: user.id,
-    total: { gt: 0 }, // 🔹 Solo mostrar compras con monto mayor a 0 (evita compras fallidas)
-    productos_comprados: { some: {} }, // 🔹 Solo compras que tienen productos
-  },
-  orderBy: { fecha_hora: "desc" },
-  include: {
-    productos_comprados: {
+      orderBy: { fecha_hora: "desc" },
       include: {
-        productos_ec: { select: { NomArticulo: true } },
+        productos_comprados: {
+          include: {
+            productos_ec: {
+              select: { NomArticulo: true },
+            },
+          },
+        },
       },
-    },
-  },
-});
+    });
 
-// ✅ Manejar caso cuando no hay compras
-if (!historialCompras.length) {
-  console.warn("⚠️ No hay historial de compras exitosas en PRODUCCIÓN.");
-}
+    // 🔍 DEBUG: Mostrar historial de compras recuperado
+    console.log("🔍 [DEBUG] Historial de compras recuperado:", JSON.stringify(historialCompras, null, 2));
 
-return NextResponse.json({ user, historialCompras }, { status: 200 });
+    // ✅ Formatear compras para asegurar que solo incluya compras con productos
+    const comprasConProductos = historialCompras
+      .filter((compra) => compra.productos_comprados.length > 0) // 🔹 Elimina compras sin productos
+      .map((compra) => ({
+        ...compra,
+        factura_url: compra.invoice ? `${process.env.NEXT_PUBLIC_SITE_URL}${compra.invoice}` : null,
+        productos: compra.productos_comprados.map((p) => ({
+          nombre: p.productos_ec.NomArticulo,
+          cantidad: p.cantidad,
+        })),
+      }));
 
-} catch (error) {
-  console.error("❌ Error obteniendo el perfil:", error);
-  return NextResponse.json({ error: "Error al obtener el perfil" }, { status: 500 });
-}
+    // 🔍 DEBUG: Mostrar compras finales filtradas
+    console.log("🔍 [DEBUG] Historial de compras con productos:", JSON.stringify(comprasConProductos, null, 2));
 
+    return NextResponse.json({ user, historialCompras: comprasConProductos }, { status: 200 });
+
+  } catch (error) {
+    console.error("❌ Error obteniendo el perfil:", error);
+    return NextResponse.json({ error: "Error al obtener el perfil" }, { status: 500 });
+  }
 }
