@@ -32,6 +32,7 @@ export async function GET(req: NextRequest) {
           include: {
             productos_ec: {
               select: {
+                Id: true,
                 NomArticulo: true,
               },
             },
@@ -39,8 +40,9 @@ export async function GET(req: NextRequest) {
         },
       },
     });
-
-    console.log("🔍 [DEBUG] Datos de historial de compras en PRODUCCIÓN:", historialCompras);
+    
+    // 📌 Depuración en logs
+    console.log("🔍 [DEBUG] Historial de compras con productos:", JSON.stringify(historialCompras, null, 2));    
 
     if (!historialCompras.length) {
       console.warn("⚠️ No hay historial de compras en PRODUCCIÓN.");
