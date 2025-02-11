@@ -9,7 +9,6 @@ export async function GET(req: NextRequest) {
         Id: true,
         NomArticulo: true,
         Precio: true,
-        stock: true,
       },
     });
 
