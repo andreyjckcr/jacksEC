@@ -67,6 +67,37 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Usuario no encontrado" }, { status: 404 });
     }
 
+    // ✅ Verificar el gasto semanal (últimos 7 días)
+    const startOfWeek = new Date();
+    startOfWeek.setDate(startOfWeek.getDate() - 7);
+
+    const totalGastado = await prisma.historial_compras_ec.aggregate({
+      where: {
+        id_usuario: userId,
+        fecha_hora: { gte: startOfWeek },
+        estado: { in: ["Pedido realizado", "Pedido en proceso"] }, // ✅ Solo cuenta estos estados
+      },
+      _sum: { total: true },
+    });
+
+    console.log("🔍 [DEBUG] Datos obtenidos de la BD en PRODUCCIÓN:", totalGastado);
+
+    const montoGastado = Number(totalGastado._sum.total) || 0;
+    const totalCompra = Number(total) || 0;
+    const totalProyectado = montoGastado + totalCompra;
+
+    console.log(`🟢 Monto gastado en PRODUCCIÓN: ₡${montoGastado}`);
+    console.log(`🛒 Total de esta compra: ₡${totalCompra}`);
+    console.log(`🔴 Monto total proyectado: ₡${totalProyectado}`);
+
+    // ✅ Validar límite de ₡12,000 y detener la compra si lo supera
+    if (totalProyectado > 12000) {
+      console.log("🚨 [ERROR] COMPRA RECHAZADA en PRODUCCIÓN: Supera el límite de ₡12,000");
+      return NextResponse.json({
+        error: `No puedes realizar esta compra porque superarías el límite semanal de ₡12,000. Ya has gastado ₡${montoGastado.toFixed(2)}.`,
+      }, { status: 400 });
+    }
+
     // 📂 Generar la factura PDF
     const pdfUrl = await generateInvoicePDF(transaction_id, cartItems, total, user.nombre, userId, "Desconocido", "Online");
 
@@ -83,7 +114,7 @@ export async function POST(req: NextRequest) {
       data: {
         id_usuario: userId,
         transaction_id,
-        invoice: pdfFileName, // ⬅️ Guarda solo el nombre del archivo, no la URL
+        invoice: pdfFileName, // ⬅️ Guarda solo el nombre del archivo
         fecha_hora: new Date(),
         device: "Desconocido",
         location: "Online",
@@ -104,21 +135,15 @@ export async function POST(req: NextRequest) {
       correo: string;
     }
 
+    interface TotalGastado {
+      _sum: {
+        total: number | null;
+      };
+    }
+
     interface NuevaCompra {
       id: number;
     }
-
-    await Promise.all(
-      cartItems.map(async (item: CartItem) => {
-        await prisma.productos_comprados.create({
-          data: {
-            id_historial: nuevaCompra.id,
-            id_producto: item.id_producto,
-            cantidad: item.cantidad,
-          },
-        });
-      })
-    );
 
     // ✅ Eliminar el carrito del usuario
     await prisma.carrito_ec.deleteMany({ where: { id_usuario: userId } });
