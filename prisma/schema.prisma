@@ -64,6 +64,7 @@ model productos_ec {
   Precio              Int
   categorias          String                @db.VarChar(100)
   image_url           String                @db.VarChar(255)
+  carrito_ec          carrito_ec[]
   productos_comprados productos_comprados[]
 }
 
@@ -74,7 +75,7 @@ model carrito_ec {
   cantidad           Int
   fecha_agregado     DateTime?          @default(now(), map: "DF__carrito_e__fecha__44FF419A") @db.DateTime
   usuarios_ecommerce usuarios_ecommerce @relation(fields: [id_usuario], references: [id], onUpdate: NoAction, map: "FK__carrito_e__id_us__45F365D3")
-  productos_ec       productos_ec       @relation(fields: [id_producto], references: [Id], onUpdate: NoAction, map: "FK__carrito_e__id_pr__46E78A0C")
+  productos_ec       productos_ec       @relation(fields: [id_producto], references: [Id], onUpdate: NoAction, map: "FK_carrito_ec_productos_ec")
 }
 
 model historial_compras_ec {
