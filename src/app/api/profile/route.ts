@@ -22,41 +22,38 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Usuario no encontrado" }, { status: 404 });
     }
 
-    // ✅ Obtener historial de compras válidas con productos asociados
+    // ✅ Obtener historial de compras exitosas con productos comprados
     const historialCompras = await prisma.historial_compras_ec.findMany({
       where: {
         id_usuario: user.id,
-        total: { gt: 0 }, // 🔹 Solo mostrar compras con monto mayor a 0 (evita compras fallidas)
+        total: { gt: 0 }, // 🔹 Solo mostrar compras con total > 0 (evita compras fallidas)
       },
       orderBy: { fecha_hora: "desc" },
       include: {
         productos_comprados: {
           include: {
-            productos_ec: {
-              select: { NomArticulo: true },
-            },
+            productos_ec: { select: { NomArticulo: true } },
           },
         },
       },
     });
 
-    // 🔍 DEBUG: Mostrar historial de compras recuperado
-    console.log("🔍 [DEBUG] Historial de compras recuperado:", JSON.stringify(historialCompras, null, 2));
+    // 🔍 Debug en producción para verificar que los productos están siendo consultados
+    console.log("🔍 [DEBUG] Historial de compras con productos en Backend:", historialCompras);
 
-    // ✅ Formatear compras para asegurar que solo incluya compras con productos
-    const comprasConProductos = historialCompras
-      .filter((compra) => compra.productos_comprados.length > 0) // 🔹 Elimina compras sin productos
-      .map((compra) => ({
-        ...compra,
-        factura_url: compra.invoice ? `${process.env.NEXT_PUBLIC_SITE_URL}${compra.invoice}` : null,
-        productos: compra.productos_comprados.map((p) => ({
-          nombre: p.productos_ec.NomArticulo,
-          cantidad: p.cantidad,
-        })),
-      }));
-
-    // 🔍 DEBUG: Mostrar compras finales filtradas
-    console.log("🔍 [DEBUG] Historial de compras con productos:", JSON.stringify(comprasConProductos, null, 2));
+    // ✅ Mapear los datos al formato correcto
+    const comprasConProductos = historialCompras.map((compra) => ({
+      id: compra.id,
+      transaction_id: compra.transaction_id,
+      fecha_hora: compra.fecha_hora,
+      total: compra.total,
+      estado: compra.estado,
+      factura_url: compra.invoice ? `${process.env.NEXT_PUBLIC_SITE_URL}/invoices/${compra.invoice}` : null,
+      productos: compra.productos_comprados.map((p) => ({
+        nombre: p.productos_ec.NomArticulo,
+        cantidad: p.cantidad,
+      })),
+    }));
 
     return NextResponse.json({ user, historialCompras: comprasConProductos }, { status: 200 });
 

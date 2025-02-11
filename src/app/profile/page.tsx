@@ -41,8 +41,9 @@ export default function ProfilePage() {
       try {
         const response = await fetch("/api/profile");
         if (!response.ok) throw new Error("Error al obtener el perfil");
-
+  
         const data = await response.json();
+        console.log("🔍 [DEBUG] Historial de compras recibido en el frontend:", data.historialCompras); // <-- Añadir esto
         setUser(data.user);
         setPurchaseHistory(data.historialCompras);
       } catch (error) {
@@ -52,9 +53,9 @@ export default function ProfilePage() {
         setLoading(false);
       }
     }
-
+  
     fetchProfile();
-  }, []);
+  }, []);  
 
   function handleLogout() {
     signOut({ redirect: false }).then(() => {
