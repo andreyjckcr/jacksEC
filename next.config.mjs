@@ -27,6 +27,15 @@ const nextConfig = {
   async headers() {
     return [
       {
+        source: "/manifest.json",
+        headers: [
+          {
+            key: "Content-Type",
+            value: "application/json",
+          },
+        ],
+      },
+      {
         source: "/invoices/:path*",
         headers: [
           { key: "Content-Disposition", value: "attachment" }, // 🔹 Forzar descarga
