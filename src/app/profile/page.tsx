@@ -146,16 +146,16 @@ export default function ProfilePage() {
 
                         {/* ✅ Nueva Columna: Lista de Productos Comprados */}
                         <td className="px-4 py-2 text-center">
-                          {purchase.productos && purchase.productos.length > 0 ? (
-                            <ul>
-                              {purchase.productos.map((p, index) => (
-                                <li key={index}>{p.nombre} (x{p.cantidad})</li>
-                              ))}
-                            </ul>
-                          ) : (
-                            <p className="text-gray-500">Sin productos</p>
-                          )}
-                        </td>
+                        {purchase.productos && purchase.productos.length > 0 ? (
+                          <ul>
+                            {purchase.productos.map((p, index) => (
+                              <li key={index}>{p.nombre} (x{p.cantidad})</li>
+                            ))}
+                          </ul>
+                        ) : (
+                          <p className="text-red-500">⚠️ No hay productos</p> // 🔍 Mensaje de depuración visual
+                        )}
+                      </td>
 
                         <td className="px-4 py-2 text-center">{new Date(purchase.fecha_hora).toLocaleString()}</td>
                         <td className="px-4 py-2 text-center">₡{purchase.total.toLocaleString()}</td>

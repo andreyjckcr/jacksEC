@@ -117,6 +117,29 @@ export async function POST(req: NextRequest) {
     console.log("✅ Compra guardada en la BD:", nuevaCompra);
 
     // 📌 Insertar productos comprados en `productos_comprados`
+    await Promise.all(
+      cartItems.map(async (item: CartItem) => {
+        await prisma.productos_comprados.create({
+          data: {
+            id_historial: nuevaCompra.id,
+            id_producto: item.id_producto,
+            cantidad: item.cantidad,
+          },
+        });
+      })
+    );
+
+    console.log("✅ Productos de la compra guardados en `productos_comprados`");
+
+    // ✅ Debug para verificar la inserción
+    const productosGuardados = await prisma.productos_comprados.findMany({
+      where: { id_historial: nuevaCompra.id },
+      include: { productos_ec: { select: { NomArticulo: true } } },
+    });
+
+    console.log("🔍 [DEBUG] Productos guardados en la compra:", productosGuardados);
+
+    // 📌 Insertar productos comprados en `productos_comprados`
     interface CartItem {
       id_producto: number;
       cantidad: number;

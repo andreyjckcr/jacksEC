@@ -32,7 +32,7 @@ export async function GET(req: NextRequest) {
       include: {
         productos_comprados: {
           include: {
-            productos_ec: { select: { NomArticulo: true } },
+            productos_ec: { select: { Id: true, NomArticulo: true } },
           },
         },
       },
