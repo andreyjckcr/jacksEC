@@ -58,20 +58,33 @@ export async function GET(req: NextRequest) {
     });
     console.log("✅ Productos guardados en la compra:", productosGuardados);
 
-    // ✅ Obtener historial de compras
-    const historialCompras = await prisma.historial_compras_ec.findMany({
-      where: { id_usuario: user.id },
-      include: { productos_comprados: true },
-    });
+    // ✅ Obtener historial de compras exitosas con productos
+const historialCompras = await prisma.historial_compras_ec.findMany({
+  where: {
+    id_usuario: user.id,
+    total: { gt: 0 }, // 🔹 Solo mostrar compras con monto mayor a 0 (evita compras fallidas)
+    productos_comprados: { some: {} }, // 🔹 Solo compras que tienen productos
+  },
+  orderBy: { fecha_hora: "desc" },
+  include: {
+    productos_comprados: {
+      include: {
+        productos_ec: { select: { NomArticulo: true } },
+      },
+    },
+  },
+});
 
-    if (!historialCompras.length) {
-      console.warn("⚠️ No hay historial de compras en PRODUCCIÓN.");
-    }
+// ✅ Manejar caso cuando no hay compras
+if (!historialCompras.length) {
+  console.warn("⚠️ No hay historial de compras exitosas en PRODUCCIÓN.");
+}
 
-    return NextResponse.json({ user, historialCompras }, { status: 200 });
+return NextResponse.json({ user, historialCompras }, { status: 200 });
 
-  } catch (error) {
-    console.error("❌ Error obteniendo el perfil:", error);
-    return NextResponse.json({ error: "Error al obtener el perfil" }, { status: 500 });
-  }
+} catch (error) {
+  console.error("❌ Error obteniendo el perfil:", error);
+  return NextResponse.json({ error: "Error al obtener el perfil" }, { status: 500 });
+}
+
 }
