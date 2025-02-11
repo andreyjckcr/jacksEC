@@ -1,6 +1,7 @@
 {
     "name": "Jack's E-commerce",
     "short_name": "Jack's",
+    "description": "Compra tus snacks favoritos en línea.",
     "start_url": "/",
     "display": "standalone",
     "background_color": "#ffffff",

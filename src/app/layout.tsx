@@ -10,12 +10,6 @@ import { Analytics } from "@vercel/analytics/react";
 
 const inter = Inter({ subsets: ["latin"] });
 
-export const metadata = {
-  title: "Jack's E-commerce",
-  description: "Compra tus snacks favoritos en línea.",
-  manifest: "/manifest.json",
-};
-
 export default function RootLayout({
   children,
 }: {
