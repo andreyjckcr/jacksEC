@@ -1,22 +1,49 @@
 import { NextRequest, NextResponse } from "next/server";
-import path from "path";
-import fs from "fs";
+import { prisma } from "../../../../../lib/prisma";
+import { generateInvoicePDF } from "../../../../../lib/generateInvoice";
 
-export async function GET(req: NextRequest, { params }: { params: { transaction_id: string } }) {
-  const filePath = path.join(process.cwd(), "public", "invoices", `${params.transaction_id}.pdf`);
+export async function GET(
+  req: NextRequest,
+  { params }: { params: { transaction_id: string } }
+) {
+  try {
+    const compra = await prisma.historial_compras_ec.findUnique({
+      where: { transaction_id: params.transaction_id },
+      include: {
+        productos_comprados: {
+          include: { productos_ec: true },
+        },
+        usuarios_ecommerce: true,
+      },
+    });
 
-  console.log("📂 Buscando archivo:", filePath);
+    if (!compra) {
+      console.error("❌ Compra no encontrada con transaction_id:", params.transaction_id);
+      return NextResponse.json({ error: "Compra no encontrada" }, { status: 404 });
+    }
 
-  if (!fs.existsSync(filePath)) {
-    console.error("❌ Factura no encontrada:", filePath);
-    return NextResponse.json({ error: "Factura no encontrada" }, { status: 404 });
+    const cartItems = compra.productos_comprados.map((item) => ({
+      cantidad: item.cantidad,
+      productos_ec: {
+        NomArticulo: item.productos_ec?.NomArticulo || "Producto desconocido",
+        Precio: item.productos_ec?.Precio || 0,
+      },
+    }));
+
+    const pdfUrl = await generateInvoicePDF(
+      compra.transaction_id,
+      cartItems,
+      Number(compra.total),
+      compra.usuarios_ecommerce.nombre,
+      compra.id_usuario,
+      compra.device || "Unknown",
+      compra.location || "Unknown",
+      compra.fecha_hora
+    );     
+
+    return NextResponse.json({ pdfUrl }, { status: 200 });
+  } catch (error) {
+    console.error("❌ Error regenerando factura:", error);
+    return NextResponse.json({ error: "Error regenerando factura" }, { status: 500 });
   }
-
-  const fileBuffer = fs.readFileSync(filePath);
-  return new NextResponse(fileBuffer, {
-    headers: {
-      "Content-Type": "application/pdf",
-      "Content-Disposition": `attachment; filename="${params.transaction_id}.pdf"`,
-    },
-  });
 }

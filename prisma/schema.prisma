@@ -79,16 +79,16 @@ model carrito_ec {
 }
 
 model historial_compras_ec {
-  id                  Int                   @id(map: "PK__historia__3213E83FC23AB90F") @default(autoincrement())
+  id                  Int                   @id @default(autoincrement())
   id_usuario          Int
-  transaction_id      String                @default("newid()", map: "DF__historial__transaction_id") @db.VarChar(50)
+  transaction_id      String                @unique @default("newid()") @db.VarChar(50)
   invoice             String                @db.NVarChar(255)
-  fecha_hora          DateTime?             @default(now(), map: "DF__historial__fecha__4BAC3F29") @db.DateTime
+  fecha_hora          DateTime?             @default(now()) @db.DateTime
   device              String?               @db.NVarChar(255)
   location            String?               @db.NVarChar(255)
   total               Decimal               @db.Decimal(10, 2)
   estado              String                @db.VarChar(50)
-  metodo_pago         String                @default("Deducción de Planilla", map: "DF__historial__metod__4E88ABD4") @db.NVarChar(100)
+  metodo_pago         String                @default("Deducción de Planilla") @db.NVarChar(100)
   factura_url         String?               @db.NVarChar(255)
   usuarios_ecommerce  usuarios_ecommerce    @relation(fields: [id_usuario], references: [id], onUpdate: NoAction, map: "FK__historial__id_us__4F7CD00D")
   productos_comprados productos_comprados[]
@@ -111,4 +111,10 @@ model sysdiagrams {
   definition   Bytes?
 
   @@unique([principal_id, name], map: "UK_principal_name")
+}
+
+model validacion_empleados {
+  Codigo_del_empleado String @id(map: "PK_validacion_empleados") @unique(map: "UQ__validaci__3DD7451DBA9EFCAE") @db.VarChar(10)
+  Nombre              String @db.VarChar(100)
+  NIF                 String @unique(map: "UQ__validaci__C7DEC330756CA4EF") @db.VarChar(20)
 }

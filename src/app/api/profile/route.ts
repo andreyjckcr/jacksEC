@@ -38,9 +38,6 @@ export async function GET(req: NextRequest) {
       },
     });
 
-    // 🔍 Debug en producción para verificar que los productos están siendo consultados
-    console.log("🔍 [DEBUG] Historial de compras con productos en Backend:", historialCompras);
-
     // ✅ Mapear los datos al formato correcto
     const comprasConProductos = historialCompras.map((compra) => ({
       id: compra.id,
@@ -48,7 +45,7 @@ export async function GET(req: NextRequest) {
       fecha_hora: compra.fecha_hora,
       total: compra.total,
       estado: compra.estado,
-      factura_url: compra.invoice ? `${process.env.NEXT_PUBLIC_SITE_URL}/invoices/${compra.invoice}` : null,
+      factura_url: `${process.env.NEXT_PUBLIC_SITE_URL}/api/invoices/${compra.transaction_id}`,
       productos: compra.productos_comprados.map((p) => ({
         nombre: p.productos_ec.NomArticulo,
         cantidad: p.cantidad,

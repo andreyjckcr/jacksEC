@@ -72,26 +72,46 @@ export default function ProfilePage() {
   }
 
   const downloadInvoice = async (facturaUrl: string, transactionId: string) => {
+    console.log("🔍 URL que se está consultando en el frontend:", facturaUrl);
+  
     if (!facturaUrl) {
       toast.error("Factura no disponible.");
       return;
     }
   
     try {
-      // 📌 Verificar si el archivo realmente existe antes de descargar
-      const response = await fetch(facturaUrl, { method: "HEAD" });
+      const response = await fetch(facturaUrl);
       if (!response.ok) {
-        toast.error("Factura no encontrada.");
+        toast.error("Factura no encontrada en el servidor.");
+        return;
+      }  
+  
+      const { pdfUrl } = await response.json();
+      if (!pdfUrl) {
+        toast.error("No se recibió la factura.");
         return;
       }
   
-      // 📂 Descargar la factura PDF
+      // Convertir Base64 a Blob para una mejor compatibilidad
+      const base64Data = pdfUrl.split(";base64,")[1];
+      const byteCharacters = atob(base64Data);
+      const byteNumbers = new Array(byteCharacters.length);
+      for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i);
+      }
+      const byteArray = new Uint8Array(byteNumbers);
+      const pdfBlob = new Blob([byteArray], { type: "application/pdf" });
+  
+      // Crear URL y descargar
+      const url = URL.createObjectURL(pdfBlob);
       const link = document.createElement("a");
-      link.href = facturaUrl;
+      link.href = url;
       link.download = `Factura_${transactionId}.pdf`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
+  
+      URL.revokeObjectURL(url); // Limpiar memoria
   
       toast.success("Descargando factura...");
     } catch (error) {
@@ -162,8 +182,11 @@ export default function ProfilePage() {
 
                         {/* ✅ Botón de Descargar Factura */}
                         <td className="px-4 py-2 text-center">
-                          <button
-                            onClick={() => downloadInvoice(purchase.factura_url, purchase.transaction_id)}
+                        <button
+                            onClick={() => {
+                              console.log("🔵 Clic detectado en descargar factura");
+                              downloadInvoice(purchase.factura_url, purchase.transaction_id);
+                            }}
                             className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition"
                           >
                             Descargar PDF

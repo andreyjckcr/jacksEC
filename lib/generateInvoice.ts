@@ -8,8 +8,10 @@ export async function generateInvoicePDF(
   userName: string,
   userId: number,
   userAgent: string | undefined,
-  location: string
-) {
+  location: string,
+  fechaCompra: Date
+)
+ {
   try {
     const pdfDoc = await PDFDocument.create();
     pdfDoc.registerFontkit(fontkit);
@@ -24,12 +26,12 @@ export async function generateInvoicePDF(
     page.drawText("Factura de Compra", { x: 50, y: height - 50, size: 18, font: customFont, color: rgb(0, 0, 0) });
 
     page.drawText(`Número de Factura: ${transaction_id}`, { x: 50, y: height - 80, size: 12, font: customFont });
-    page.drawText(`Fecha: ${new Date().toLocaleString()}`, { x: 50, y: height - 100, size: 12, font: customFont });
+    page.drawText(`Fecha: ${fechaCompra.toLocaleString()}`, { x: 50, y: height - 100, size: 12, font: customFont });
 
-    // 📌 Información del Usuario
-    page.drawText(`Usuario: ${userName} (ID: ${userId})`, { x: 50, y: height - 130, size: 12, font: customFont });
+    // Información del Usuario
+    page.drawText(`Dispositivo: ${userAgent || "Desconocido"}`, { x: 50, y: height - 120, size: 12, font: customFont });
+    page.drawText(`Usuario: ${userName} (ID: ${userId})`, { x: 50, y: height - 150, size: 12, font: customFont });
 
-    // 📌 Método de Pago
     page.drawText("Método de Pago: Deducción de Planilla", { x: 50, y: height - 160, size: 12, font: customFont });
 
     // 📌 Dispositivo y Ubicación
