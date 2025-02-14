@@ -38,8 +38,8 @@ export async function GET(
       compra.id_usuario,
       compra.device || "Unknown",
       compra.location || "Unknown",
-      compra.fecha_hora
-    );     
+      compra.fecha_hora ?? new Date() // 👈 Este cambio
+    );    
 
     return NextResponse.json({ pdfUrl }, { status: 200 });
   } catch (error) {
