@@ -2,7 +2,7 @@
 
 import type React from "react"
 import { createContext, useContext, useState, useEffect } from "react"
-import type { Product } from "../data/productsMockData"
+import type { Product } from "../types/product"
 
 interface CartItem extends Product {
   quantity: number
