@@ -14,6 +14,7 @@ export async function POST(req: NextRequest) {
 
     const { cartItems, total } = await req.json();
     const transaction_id = `INV-${Math.random().toString(36).substr(2, 9)}`;
+    const userAgent = req.headers.get('user-agent') || "Desconocido";
     const userId = Number(session.user.id);
 
     // Verificar que el usuario exista
@@ -53,9 +54,10 @@ export async function POST(req: NextRequest) {
       total,
       user.nombre,
       userId,
-      "Desconocido",
-      "Online"
-    );
+      userAgent || "Desconocido",
+      "Online",
+      new Date()
+    );    
 
     // Crear registro de compra
     const nuevaCompra = await prisma.historial_compras_ec.create({
