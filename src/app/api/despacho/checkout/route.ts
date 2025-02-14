@@ -89,7 +89,16 @@ export async function POST(req: NextRequest) {
     }
 
     // 📂 Generar factura PDF
-    const pdfUrl = await generateInvoicePDF(transaction_id, pedido, total, user.nombre, userId, "Despachador", "En tienda");
+    const pdfUrl = await generateInvoicePDF(
+      transaction_id,
+      pedido,
+      total,
+      user.nombre,
+      userId,
+      "Despachador",
+      "En tienda",
+      new Date() // 👈 Aquí agregas la fecha
+    );    
 
     // ✅ Guardar la compra en la BD con estado "Pedido realizado"
     const nuevaCompra = await prisma.historial_compras_ec.create({
