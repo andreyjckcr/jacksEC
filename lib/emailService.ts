@@ -1,5 +1,5 @@
-// emailService.ts
 import nodemailer from "nodemailer";
+import path from "path";
 
 const transporter = nodemailer.createTransport({
   host: "smtp.office365.com",
@@ -36,7 +36,7 @@ export async function sendConfirmationEmail(
     attachments: [
       {
         filename: "logoJacks.png",
-        path: "C:/Users/icortez/Desktop/Jacks Ecommerce/public/logoJacks.png",
+        path: path.join(process.cwd(), "public", "logoJacks.png"),
         cid: "logoJacks",
       },
       {
@@ -45,5 +45,5 @@ export async function sendConfirmationEmail(
         contentType: "application/pdf",
       },
     ],
-  });  
+  });
 }
