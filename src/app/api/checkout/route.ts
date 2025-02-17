@@ -4,6 +4,10 @@ import { sendConfirmationEmail } from "../../../../lib/emailService";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../../../../lib/authOptions";
 import { prisma } from "../../../../lib/prisma";
+import { Buffer } from "buffer";
+
+// Asegurarse que siempre se use Node.js runtime, aunque sea servidor local
+export const runtime = "nodejs";
 
 export async function POST(req: NextRequest) {
   try {
@@ -14,7 +18,7 @@ export async function POST(req: NextRequest) {
 
     const { cartItems, total } = await req.json();
     const transaction_id = `INV-${Math.random().toString(36).substr(2, 9)}`;
-    const userAgent = req.headers.get('user-agent') || "Desconocido";
+    const userAgent = req.headers.get("user-agent") || "Desconocido";
     const userId = Number(session.user.id);
 
     // Verificar que el usuario exista
@@ -22,6 +26,7 @@ export async function POST(req: NextRequest) {
       where: { id: userId },
       select: { nombre: true, correo: true },
     });
+
     if (!user) {
       return NextResponse.json({ error: "Usuario no encontrado" }, { status: 404 });
     }
@@ -41,10 +46,14 @@ export async function POST(req: NextRequest) {
 
     const montoGastado = Number(totalGastado._sum.total) || 0;
     const totalCompra = Number(total) || 0;
+
     if (montoGastado + totalCompra > 12000) {
-      return NextResponse.json({
-        error: `No puedes realizar esta compra porque superarías el límite semanal de ₡12,000. Ya has gastado ₡${montoGastado.toFixed(2)}.`,
-      }, { status: 400 });
+      return NextResponse.json(
+        {
+          error: `No puedes realizar esta compra porque superarías el límite semanal de ₡12,000. Ya has gastado ₡${montoGastado.toFixed(2)}.`,
+        },
+        { status: 400 }
+      );
     }
 
     // Generar la factura en Base64
@@ -54,10 +63,10 @@ export async function POST(req: NextRequest) {
       total,
       user.nombre,
       userId,
-      userAgent || "Desconocido",
+      userAgent,
       "Online",
       new Date()
-    );    
+    );
 
     // Crear registro de compra
     const nuevaCompra = await prisma.historial_compras_ec.create({
@@ -65,12 +74,11 @@ export async function POST(req: NextRequest) {
         id_usuario: userId,
         transaction_id,
         fecha_hora: new Date(),
-        device: "Desconocido",
+        device: userAgent,
         location: "Online",
         total,
         estado: "Pedido realizado",
         metodo_pago: "Deducción de Planilla",
-        // Puedes eliminar esta clave si no deseas guardar nada del PDF
         invoice: transaction_id,
       },
     });
@@ -97,12 +105,15 @@ export async function POST(req: NextRequest) {
       user.nombre,
       transaction_id,
       total,
-      // Convertir la URL base64 en Buffer en la función de email
       Buffer.from(pdfUrl.replace(/^data:application\/pdf;base64,/, ""), "base64")
     );
 
     return NextResponse.json({ transaction_id, pdfUrl }, { status: 200 });
   } catch (error) {
-    return NextResponse.json({ error: "Error al procesar la compra" }, { status: 500 });
+    console.error("Error en /api/checkout:", error);
+    return NextResponse.json(
+      { error: "Error al procesar la compra", detalle: error instanceof Error ? error.message : String(error) },
+      { status: 500 }
+    );
   }
 }

@@ -1,11 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "../../../../../lib/prisma";
 
-export const dynamic = "force-dynamic"; // Evita la prerenderización estática
+export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
   try {
-    // ✅ Obtener el código de empleado desde los parámetros de la URL
     const { searchParams } = new URL(req.url);
     const codigoEmpleado = searchParams.get("codigo");
 
@@ -13,17 +12,15 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Código de empleado requerido" }, { status: 400 });
     }
 
-    // ✅ Buscar el usuario en la base de datos
     const user = await prisma.usuarios_ecommerce.findUnique({
       where: { codigo_empleado: codigoEmpleado },
-      select: { id: true, nombre: true, correo: true, cedula: true },
+      select: { id: true, nombre: true, correo: true, cedula: true, codigo_empleado: true },
     });
 
     if (!user) {
       return NextResponse.json({ error: "Usuario no encontrado" }, { status: 404 });
     }
 
-    // ✅ Calcular el gasto semanal (últimos 7 días)
     const startOfWeek = new Date();
     startOfWeek.setDate(startOfWeek.getDate() - 7);
 
@@ -31,7 +28,7 @@ export async function GET(req: NextRequest) {
       where: {
         id_usuario: user.id,
         fecha_hora: { gte: startOfWeek },
-        estado: { in: ["Pedido realizado", "Pedido en proceso"] }, // ✅ Solo estos estados cuentan
+        estado: { in: ["Pedido realizado", "Pedido en proceso"] },
       },
       _sum: { total: true },
     });
@@ -40,7 +37,8 @@ export async function GET(req: NextRequest) {
       nombre: user.nombre,
       correo: user.correo,
       cedula: user.cedula,
-      totalGastado: totalGastado._sum.total || 0, // Si no ha gastado nada, devuelve 0
+      codigo_empleado: user.codigo_empleado,
+      totalGastado: totalGastado._sum.total || 0,
     });
 
   } catch (error) {

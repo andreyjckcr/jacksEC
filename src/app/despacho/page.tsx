@@ -63,7 +63,6 @@ export default function DespachoPage() {
     try {
       const response = await fetch(`/api/despacho/user?codigo=${codigoEmpleado}`);
       const data = await response.json();
-
       if (!response.ok) {
         throw new Error(data.error || "Error al obtener usuario");
       }
@@ -111,7 +110,7 @@ export default function DespachoPage() {
         .map((item) =>
           item.Id === Id ? { ...item, cantidad: item.cantidad - 1 } : item
         )
-        .filter((item) => item.cantidad > 0) // Elimina si la cantidad llega a 0
+        .filter((item) => item.cantidad > 0)
     );
   };
 
@@ -182,7 +181,7 @@ export default function DespachoPage() {
       </div>
 
       {/* 🛒 Resumen del Pedido */}
-        <div className="bg-white p-4 shadow-md rounded-lg mt-6">
+      <div className="bg-white p-4 shadow-md rounded-lg mt-6">
         <h2 className="text-xl font-bold mb-4">📋 Resumen del Pedido</h2>
 
         {pedido.length === 0 ? (
@@ -241,33 +240,30 @@ export default function DespachoPage() {
         )}
         </div>
 
-        {/* 📌 Botón para procesar compra */}
-    <div className="mt-6 flex justify-end">
-    <Button
-        onClick={() => {
-        if (!customer) {
-            toast.error("Debes buscar y seleccionar un usuario antes de continuar.");
-            return;
-        }
+      {/* 📌 Botón para procesar compra */}
+      <div className="mt-6 flex justify-end">
+        <Button
+          onClick={() => {
+            if (!customer) {
+              toast.error("Debes buscar y seleccionar un usuario antes de continuar.");
+              return;
+            }
 
-        if (pedido.length === 0) {
-            toast.error("No hay productos en el pedido.");
-            return;
-        }
+            if (pedido.length === 0) {
+              toast.error("No hay productos en el pedido.");
+              return;
+            }
 
-        // Guardar los datos en localStorage para usarlos en el checkout
-        localStorage.setItem("pedido_despacho", JSON.stringify(pedido));
-        localStorage.setItem("codigo_empleado_despacho", customer.codigo_empleado);
+            localStorage.setItem("pedido_despacho", JSON.stringify(pedido));
+            localStorage.setItem("codigo_empleado_despacho", customer.codigo_empleado);
 
-        // Redirigir a checkout del despacho
-        router.push("/despacho/checkout");
-        }}
-        className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700"
-    >
-        Procesar Compra
-    </Button>
-    </div>
-
+            router.push("/despacho/checkout");
+          }}
+          className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700"
+        >
+          Procesar Compra
+        </Button>
+      </div>
     </div>
   );
 }

@@ -5,7 +5,6 @@ import { SessionProvider } from "next-auth/react";
 import { Toaster } from "react-hot-toast";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import { Analytics } from "@vercel/analytics/react";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -42,7 +41,6 @@ export default function RootLayout({
         <SessionProvider>
           {children}
           <Toaster position="top-right" />
-          <Analytics />
         </SessionProvider>
       </body>
     </html>
