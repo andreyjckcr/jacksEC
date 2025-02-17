@@ -84,6 +84,8 @@ export function Navbar() {
               </Link>
             </div>
 
+            
+
             {/* 🔹 Right Side Icons */}
             <div className="flex items-center space-x-6">
               {/* 🔔 Notificaciones */}
