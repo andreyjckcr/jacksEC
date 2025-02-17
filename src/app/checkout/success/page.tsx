@@ -39,7 +39,7 @@ export default function CheckoutSuccessPage() {
     <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 p-4">
       <div className="text-center space-y-6">
         <Image
-          src="https://www.jacks.co.cr/wp-content/uploads/2024/02/logo60jacks_1.png"
+          src="/logoJacks.png"
           alt="Jack's Logo"
           width={200}
           height={100}

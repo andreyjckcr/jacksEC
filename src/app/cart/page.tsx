@@ -130,7 +130,7 @@ useEffect(() => {
         ) : cartItems.length === 0 ? (
           <div className="flex flex-col items-center justify-center min-h-[60vh]">
             <Image
-              src="https://www.jacks.co.cr/wp-content/uploads/2024/02/logo60jacks_1.png"
+              src="/logoJacks.png"
               alt="Jack's Logo"
               width={250}
               height={150}

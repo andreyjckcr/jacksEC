@@ -6,6 +6,7 @@ import { toast } from "react-hot-toast";
 import Link from "next/link";
 import { X } from "lucide-react";
 import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 
 interface Product {
   Id: number;
@@ -25,8 +26,11 @@ interface ProductCardProps {
 
 export function ProductCard({ product }: ProductCardProps) {
   const { data: session } = useSession();
+  const router = useRouter();
 
-  const handleAddToCart = async () => {
+  const handleAddToCart = async (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.stopPropagation(); // Evitar que se dispare el click del card
+
     if (!session) {
       toast.error("Debes iniciar sesión para agregar productos al carrito.");
       return;
@@ -83,16 +87,23 @@ export function ProductCard({ product }: ProductCardProps) {
           </div>
         ),
         { duration: 2500 }
-      );      
+      );
     } catch (error) {
       toast.error("No se pudo agregar al carrito");
     }
   };
 
+  const handleCardClick = () => {
+    router.push(`/product/${product.Id}`);
+  };
+
   const priceToShow = Number(product.Precio) || 0;
 
   return (
-    <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg hover:scale-105 transition-all duration-200 ease-in-out">
+    <div
+      className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg hover:scale-105 transition-all duration-200 ease-in-out cursor-pointer"
+      onClick={handleCardClick}
+    >
       <div className="relative h-48 w-full">
         <Image
           src={product.image_url || "/fallback-image.jpg"}
@@ -106,8 +117,8 @@ export function ProductCard({ product }: ProductCardProps) {
         <h3 className="text-lg font-semibold mb-2 truncate w-full max-w-[180px]">
           {product.NomArticulo.length > 25 ? product.NomArticulo.substring(0, 25) + "..." : product.NomArticulo}
         </h3>
-        {product.categorias && <p className="text-gray-600 mb-4 text-sm">Categoría: {product.categorias}</p>}
-        <p className="text-gray-600 mb-4 text-sm">Stock disponible: {product.stock}</p>
+        {product.categorias && <p className="text-gray-600 mb-2 text-sm">Categoría: {product.categorias}</p>}
+        <p className="text-gray-600 mb-2 text-sm">Stock disponible: {product.stock}</p>
         <div className="flex justify-between items-center">
           <span className="text-xl font-bold">₡{priceToShow.toFixed(0)}</span>
           <Button

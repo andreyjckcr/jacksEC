@@ -48,7 +48,7 @@ export default function LoginPage() {
       <div className="bg-[#e6f0ff] p-8 flex flex-col items-center justify-center">
         <div className="mb-4">
           <Image
-            src="https://www.jacks.co.cr/wp-content/uploads/2024/02/logo60jacks_1.png"
+            src="/logoJacks.png"
             alt="Logo Jack's"
             width={300}
             height={150}

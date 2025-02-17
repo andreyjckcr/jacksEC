@@ -35,8 +35,8 @@ export async function sendConfirmationEmail(
     `,
     attachments: [
       {
-        filename: "logo1.png",
-        path: "C:/Users/icortez/Desktop/Jacks Ecommerce/public/logo1.png",
+        filename: "logoJacks.png",
+        path: "C:/Users/icortez/Desktop/Jacks Ecommerce/public/logoJacks.png",
         cid: "logoJacks",
       },
       {

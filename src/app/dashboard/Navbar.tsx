@@ -68,7 +68,7 @@ export function Navbar() {
             <div className="flex-1 flex justify-center md:justify-start md:w-1/4">
               <Link href="/dashboard" className="flex items-center">
                 <Image
-                  src="https://www.jacks.co.cr/wp-content/uploads/2024/02/logo60jacks_1.png"
+                  src="/logoJacks.png"
                   alt="Jack's Logo"
                   width={100}
                   height={50}
