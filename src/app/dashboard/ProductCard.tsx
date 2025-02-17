@@ -7,6 +7,7 @@ import Link from "next/link";
 import { X } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { useCartStore } from "../cartStore/cartStore";
 
 interface Product {
   Id: number;
@@ -27,9 +28,10 @@ interface ProductCardProps {
 export function ProductCard({ product }: ProductCardProps) {
   const { data: session } = useSession();
   const router = useRouter();
+  const increaseCartCount = useCartStore.getState().increaseCartCount; // 👈 Obtenemos la función para aumentar el contador
 
   const handleAddToCart = async (e: React.MouseEvent<HTMLButtonElement>) => {
-    e.stopPropagation(); // Evitar que se dispare el click del card
+    e.stopPropagation();
 
     if (!session) {
       toast.error("Debes iniciar sesión para agregar productos al carrito.");
@@ -49,6 +51,9 @@ export function ProductCard({ product }: ProductCardProps) {
       if (!response.ok) {
         throw new Error("Error al agregar al carrito");
       }
+
+      // ✅ Actualizamos el contador en tiempo real
+      increaseCartCount(1);
 
       toast.custom(
         (t) => (

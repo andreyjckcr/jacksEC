@@ -7,6 +7,7 @@ import Image from "next/image";
 import { Button } from "../../../../components/ui/button";
 import { Navbar } from "../../../components/Navbar";
 import { toast } from "react-hot-toast";
+import { useCartStore } from "../../cartStore/cartStore";
 
 interface Product {
   Id: number;
@@ -25,6 +26,8 @@ export default function ProductPage({ params }: { params: { id: string } }) {
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const increaseCartCount = useCartStore.getState().increaseCartCount;
+
   useEffect(() => {
     async function fetchProduct() {
       try {
@@ -42,10 +45,6 @@ export default function ProductPage({ params }: { params: { id: string } }) {
     fetchProduct();
   }, [params.id]);
 
-  const handleGoBack = () => {
-    router.back();
-  };
-
   const handleAddToCart = async () => {
     if (!session) {
       toast.error("Debes iniciar sesión para agregar productos al carrito.");
@@ -61,15 +60,20 @@ export default function ProductPage({ params }: { params: { id: string } }) {
 
       if (!response.ok) throw new Error("No se pudo agregar al carrito");
 
+      increaseCartCount(1);
+
       toast.success("Producto agregado al carrito 🛒");
-      router.refresh(); // 🔄 Actualiza la página del carrito
     } catch (error) {
       toast.error("Error al agregar producto");
     }
   };
 
-  if (loading) return <p className="text-center text-gray-600">Cargando...</p>;
-  if (!product) return <p className="text-center text-red-600">Producto no encontrado.</p>;
+  if (loading) return <p>Cargando...</p>;
+  if (!product) return <p>Producto no encontrado.</p>;
+
+  function handleGoBack() {
+    router.back();
+  }
 
   return (
     <>
@@ -103,7 +107,7 @@ export default function ProductPage({ params }: { params: { id: string } }) {
                   className="bg-gray-300 hover:bg-gray-400 text-black px-6 py-3 rounded-lg shadow-md transition-all w-full md:w-auto"
                   size="lg"
                 >
-                  Regresar
+                  ← Regresar
                 </Button>
   
                 <Button 

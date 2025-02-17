@@ -159,7 +159,7 @@ export default function CheckoutPage() {
                   className="bg-gray-300 hover:bg-gray-400 text-black px-6 py-3 rounded-lg shadow-md transition-all"
                   size="lg"
                 >
-                  Regresar
+                  ← Regresar
                 </Button>
 
                 {/* Botón de confirmar compra en azul con efecto de carga */}

@@ -5,8 +5,6 @@ import { SessionProvider } from "next-auth/react";
 import { Toaster } from "react-hot-toast";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import type React from "react";
-import { CartProvider } from "./context/CartContext";
 import { Analytics } from "@vercel/analytics/react";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -16,7 +14,6 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-
   useEffect(() => {
     console.log("🟢 Intentando registrar Service Worker..."); // DEBUG
     if ("serviceWorker" in navigator) {
@@ -43,11 +40,9 @@ export default function RootLayout({
       </head>
       <body className={inter.className}>
         <SessionProvider>
-          <CartProvider>
-            {children}
-            <Toaster position="top-right" />
-            <Analytics />
-          </CartProvider>
+          {children}
+          <Toaster position="top-right" />
+          <Analytics />
         </SessionProvider>
       </body>
     </html>

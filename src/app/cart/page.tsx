@@ -8,10 +8,14 @@ import { Trash2, Plus, Minus } from "lucide-react";
 import { Navbar } from "../../components/Navbar";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
+import { useCartStore } from "../../app/cartStore/cartStore";
 
 export default function CartPage() {
   const { data: session } = useSession();
   const router = useRouter();
+
+  const { setCartCount, decreaseCartCount, increaseCartCount } = useCartStore();
+
   const [showConfirmClearCart, setShowConfirmClearCart] = useState(false);
 
   interface CartItem {
@@ -27,82 +31,93 @@ export default function CartPage() {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // ✅ Función mejorada para obtener los datos actualizados del carrito
-const fetchCart = async () => {
-  if (!session) return;
+  const fetchCart = async () => {
+    if (!session) return;
+    setLoading(true);
+    try {
+      const response = await fetch("/api/cart");
+      if (!response.ok) throw new Error("Error al obtener el carrito");
+      const data = await response.json();
+      setCartItems(data);
 
-  setLoading(true); // 🔹 Indicar que se está cargando
+      // ✅ Actualizar el contador global con el total de cantidades del carrito
+      const totalCantidad = data.reduce((sum: number, item: CartItem) => sum + item.cantidad, 0);
+      setCartCount(totalCantidad);
+    } catch (error) {
+      console.error("❌ Error al obtener el carrito:", error);
+      toast.error("Error al cargar el carrito");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  try {
-    const response = await fetch("/api/cart");
-    if (!response.ok) throw new Error("Error al obtener el carrito");
-
-    const data = await response.json();
-    setCartItems(data); // 🔹 Actualizar el estado con los productos del carrito
-  } catch (error) {
-    console.error("❌ Error al obtener el carrito:", error);
-    toast.error("Error al cargar el carrito");
-  } finally {
-    setLoading(false); // 🔹 Finalizar la carga
-  }
-};
-
-// 🔹 Llamar a fetchCart cuando el componente se monta
-useEffect(() => {
-  fetchCart();
-}, [session]);
-
-
-  // 🔹 Llamar a fetchCart cuando el componente se monta
   useEffect(() => {
     fetchCart();
   }, [session]);
 
-
-  const handleRemoveFromCart = async (id_producto: number): Promise<void> => {
+  const handleRemoveFromCart = async (id_producto: number, cantidad: number) => {
     try {
       const response = await fetch("/api/cart", {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id_producto }),
       });
-  
+
       if (!response.ok) throw new Error("No se pudo eliminar el producto");
-  
-      // 🔄 Refrescar el carrito desde la API para evitar errores
-      await fetchCart();
-  
+
+      // Actualizamos el estado local del carrito eliminando el producto
+      setCartItems((prev) => prev.filter((item) => item.id_producto !== id_producto));
+
+      // ✅ Disminuir el contador global directamente
+      decreaseCartCount(cantidad);
+
       toast.success("Producto eliminado del carrito");
     } catch (error) {
       console.error("❌ Error al eliminar producto:", error);
       toast.error("Error al eliminar producto");
     }
-  };    
+  };
 
   const handleUpdateQuantity = async (id_producto: number, nuevaCantidad: number) => {
+    const itemActual = cartItems.find((item) => item.id_producto === id_producto);
+    if (!itemActual) return;
+
+    const diferencia = nuevaCantidad - itemActual.cantidad; // Ejemplo: antes 3 -> ahora 5 => diferencia: +2
+
     try {
       if (nuevaCantidad < 1) {
         toast.error("La cantidad no puede ser menor a 1");
         return;
       }
-  
+
       const response = await fetch("/api/cart", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id_producto, cantidad: nuevaCantidad }),
       });
-  
+
       if (!response.ok) throw new Error("No se pudo actualizar la cantidad");
-  
-      // 🔄 Volver a obtener el carrito desde la API para evitar inconsistencias
-      await fetchCart();
-  
+
+      // Actualizamos el estado local del carrito
+      setCartItems((prev) =>
+        prev.map((item) =>
+          item.id_producto === id_producto ? { ...item, cantidad: nuevaCantidad } : item
+        )
+      );
+
+      // ✅ Ajustamos el contador global en función del cambio (+ o -)
+      if (diferencia > 0) {
+        increaseCartCount(diferencia);
+      } else {
+        decreaseCartCount(Math.abs(diferencia));
+      }
+
       toast.success("Cantidad actualizada correctamente");
     } catch (error) {
       console.error("❌ Error al actualizar la cantidad:", error);
       toast.error("Error al actualizar la cantidad");
     }
-  };   
+  };
 
   const handleClearCart = async () => {
     try {
@@ -110,6 +125,8 @@ useEffect(() => {
       if (!response.ok) throw new Error("Error al vaciar el carrito");
 
       setCartItems([]);
+      setCartCount(0); // ✅ Reiniciamos el contador global
+
       toast.success("Carrito vaciado");
       setShowConfirmClearCart(false);
     } catch (error) {
@@ -123,7 +140,15 @@ useEffect(() => {
     <>
       <Navbar />
       <div className="container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold mb-6">🛒 Tu Carrito</h1>
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-3xl font-bold">🛒 Tu Carrito</h1>
+          <Button
+            onClick={() => router.back()}
+            className="bg-gray-300 hover:bg-gray-400 text-black px-4 py-2 rounded-lg"
+          >
+            ← Regresar
+          </Button>
+        </div>
 
         {loading ? (
           <p className="text-center">Cargando carrito...</p>
@@ -186,7 +211,7 @@ useEffect(() => {
                       variant="destructive"
                       size="icon"
                       className="flex items-center justify-center w-8 h-8 p-0 text-red-500 hover:text-red-600"
-                      onClick={() => handleRemoveFromCart(item.id_producto)}
+                      onClick={() => handleRemoveFromCart(item.id_producto, item.cantidad)}
                     >
                       <Trash2 className="h-5 w-5" />
                     </Button>

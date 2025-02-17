@@ -5,8 +5,16 @@ import { ShoppingCart, Bell, User, Info } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "./ui/tooltip";
+import { useCartStore } from "../app/cartStore/cartStore";
 
 export function Navbar() {
+  const cartCount = useCartStore((state) => state.cartCount);
+  const fetchCartCount = useCartStore((state) => state.fetchCartCount);
+
+  useEffect(() => {
+    fetchCartCount();
+  }, [fetchCartCount]);
+
   const [totalGastado, setTotalGastado] = useState<number>(0);
   const LIMITE_SEMANAL = 12000; // Límite semanal
 
@@ -14,7 +22,7 @@ export function Navbar() {
   useEffect(() => {
     async function fetchTotalSpent() {
       try {
-        const response = await fetch("/api/total-gastado"); // 📌 Nueva API para consultar gasto semanal
+        const response = await fetch("/api/total-gastado");
         if (!response.ok) throw new Error("Error al obtener el gasto semanal");
 
         const data = await response.json();
@@ -85,12 +93,17 @@ export function Navbar() {
               </Tooltip>
             </TooltipProvider>
 
-            {/* 🛒 Carrito */}
+            {/* 🛒 Carrito con contador */}
             <TooltipProvider delayDuration={0}>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Link href="/cart" className="text-gray-700 hover:text-blue-600">
+                  <Link href="/cart" className="relative text-gray-700 hover:text-blue-600">
                     <ShoppingCart className="h-6 w-6" />
+                    {cartCount > 0 && (
+                      <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full">
+                        {cartCount}
+                      </span>
+                    )}
                   </Link>
                 </TooltipTrigger>
                 <TooltipContent className="bg-white text-black border border-gray-300 shadow-md px-3 py-2 rounded-md">

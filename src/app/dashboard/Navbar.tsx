@@ -1,20 +1,27 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ShoppingCart, User, Menu, Search, Bell } from "lucide-react";
 import Image from "next/image";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../../../components/ui/tooltip";
 import { Sheet, SheetContent, SheetTrigger } from "../../../components/ui/sheet";
 import { Button } from "../../../components/ui/button";
+import { useCartStore } from "../cartStore/cartStore";
 
 export function Navbar() {
+  const cartCount = useCartStore((state) => state.cartCount);
+  const fetchCartCount = useCartStore((state) => state.fetchCartCount);
+
+  useEffect(() => {
+    fetchCartCount();
+  }, [fetchCartCount]);
+
   const [searchTerm, setSearchTerm] = useState("");
   interface Product {
     Id: number;
     NomArticulo: string;
   }
-
   const [searchResults, setSearchResults] = useState<Product[]>([]);
 
   const handleSearch = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -93,15 +100,20 @@ export function Navbar() {
                 </Tooltip>
               </TooltipProvider>
 
-              {/* 🛒 Carrito */}
+              {/* 🛒 Carrito con contador */}
               <TooltipProvider delayDuration={0}>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Link href="/cart" className="text-gray-700 hover:text-blue-600">
+                    <Link href="/cart" className="relative text-gray-700 hover:text-blue-600">
                       <ShoppingCart className="h-6 w-6" />
+                      {cartCount > 0 && (
+                        <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full">
+                          {cartCount}
+                        </span>
+                      )}
                     </Link>
                   </TooltipTrigger>
-                  <TooltipContent className="bg-white text-black border border-gray-300 shadow-md px-3 py-1 rounded-md">
+                  <TooltipContent className="bg-white text-black border border-gray-300 shadow-md px-3 py-2 rounded-md">
                     <p>Carrito de compras</p>
                   </TooltipContent>
                 </Tooltip>

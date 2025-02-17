@@ -182,7 +182,7 @@ export default function NotificationSettings() {
                 Cancelar
               </Button>
               <Button onClick={confirmGoBack} className="bg-red-500 hover:bg-red-600 text-white">
-                Regresar sin guardar
+              ← Regresar sin guardar
               </Button>
             </div>
           </div>
