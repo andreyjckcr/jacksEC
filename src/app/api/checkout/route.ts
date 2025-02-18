@@ -1,12 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { generateInvoicePDF } from "../../../../lib/generateInvoice";
 import { sendConfirmationEmail } from "../../../../lib/emailService";
+import { generateInvoicePDF } from "../../../../lib/generateInvoice";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../../../../lib/authOptions";
 import { prisma } from "../../../../lib/prisma";
 import { Buffer } from "buffer";
 
-// Asegurarse que siempre se use Node.js runtime, aunque sea servidor local
 export const runtime = "nodejs";
 
 export async function POST(req: NextRequest) {
@@ -21,7 +20,6 @@ export async function POST(req: NextRequest) {
     const userAgent = req.headers.get("user-agent") || "Desconocido";
     const userId = Number(session.user.id);
 
-    // Verificar que el usuario exista
     const user = await prisma.usuarios_ecommerce.findUnique({
       where: { id: userId },
       select: { nombre: true, correo: true },
@@ -31,7 +29,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Usuario no encontrado" }, { status: 404 });
     }
 
-    // Verificar el gasto semanal (últimos 7 días)
     const startOfWeek = new Date();
     startOfWeek.setDate(startOfWeek.getDate() - 7);
 
@@ -56,8 +53,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Generar la factura en Base64
-    const pdfUrl = await generateInvoicePDF(
+    const pdfBase64 = await generateInvoicePDF(
       transaction_id,
       cartItems,
       total,
@@ -68,7 +64,8 @@ export async function POST(req: NextRequest) {
       new Date()
     );
 
-    // Crear registro de compra
+    const pdfBuffer = Buffer.from(pdfBase64.replace(/^data:application\/pdf;base64,/, ""), "base64");
+
     const nuevaCompra = await prisma.historial_compras_ec.create({
       data: {
         id_usuario: userId,
@@ -83,7 +80,6 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    // Registrar productos comprados
     await Promise.all(
       cartItems.map(async (item: { id_producto: number; cantidad: number }) => {
         await prisma.productos_comprados.create({
@@ -96,21 +92,20 @@ export async function POST(req: NextRequest) {
       })
     );
 
-    // Vaciar carrito
     await prisma.carrito_ec.deleteMany({ where: { id_usuario: userId } });
 
-    // Enviar correo con el PDF adjunto
     await sendConfirmationEmail(
       user.correo,
       user.nombre,
       transaction_id,
       total,
-      Buffer.from(pdfUrl.replace(/^data:application\/pdf;base64,/, ""), "base64")
+      pdfBuffer
     );
 
-    return NextResponse.json({ transaction_id, pdfUrl }, { status: 200 });
+    // ✅ Al devolver el transaction_id, el frontend ya sabe cómo descargar el PDF automáticamente
+    return NextResponse.json({ transaction_id }, { status: 200 });
   } catch (error) {
-    console.error("Error en /api/checkout:", error);
+    console.error("❌ Error en /api/checkout:", error);
     return NextResponse.json(
       { error: "Error al procesar la compra", detalle: error instanceof Error ? error.message : String(error) },
       { status: 500 }
