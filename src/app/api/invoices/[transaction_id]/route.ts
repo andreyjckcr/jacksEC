@@ -1,14 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "../../../../../lib/prisma";
 import { generateInvoicePDF } from "../../../../../lib/generateInvoice";
+import { Buffer } from "buffer";
 
 export async function GET(
   req: NextRequest,
   { params }: { params: { transaction_id: string } }
 ) {
   try {
+    const transactionId = params.transaction_id;
+
     const compra = await prisma.historial_compras_ec.findUnique({
-      where: { transaction_id: params.transaction_id },
+      where: { transaction_id: transactionId },
       include: {
         productos_comprados: {
           include: { productos_ec: true },
@@ -18,7 +21,6 @@ export async function GET(
     });
 
     if (!compra) {
-      console.error("❌ Compra no encontrada con transaction_id:", params.transaction_id);
       return NextResponse.json({ error: "Compra no encontrada" }, { status: 404 });
     }
 
@@ -30,18 +32,26 @@ export async function GET(
       },
     }));
 
-    const pdfUrl = await generateInvoicePDF(
+    const pdfBase64 = await generateInvoicePDF(
       compra.transaction_id,
       cartItems,
       Number(compra.total),
       compra.usuarios_ecommerce.nombre,
       compra.id_usuario,
-      compra.device || "Unknown",
-      compra.location || "Unknown",
-      compra.fecha_hora ?? new Date() // 👈 Este cambio
-    );    
+      compra.device || "Desconocido",
+      compra.location || "Desconocido",
+      compra.fecha_hora ?? new Date()
+    );
 
-    return NextResponse.json({ pdfUrl }, { status: 200 });
+    const pdfBuffer = Buffer.from(pdfBase64.replace(/^data:application\/pdf;base64,/, ""), "base64");
+
+    return new NextResponse(pdfBuffer, {
+      status: 200,
+      headers: {
+        "Content-Type": "application/pdf",
+        "Content-Disposition": `attachment; filename=Factura_${transactionId}.pdf`,
+      },
+    });
   } catch (error) {
     console.error("❌ Error regenerando factura:", error);
     return NextResponse.json({ error: "Error regenerando factura" }, { status: 500 });

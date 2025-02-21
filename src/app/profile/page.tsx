@@ -71,39 +71,20 @@ export default function ProfilePage() {
     return <p className="text-center text-red-600">Usuario no encontrado.</p>;
   }
 
-  const downloadInvoice = async (facturaUrl: string, transactionId: string) => {
-    console.log("🔍 URL que se está consultando en el frontend:", facturaUrl);
+  const downloadInvoice = async (transactionId: string) => {
+    console.log("🔍 Iniciando descarga de factura con transactionId:", transactionId);
   
-    if (!facturaUrl) {
-      toast.error("Factura no disponible.");
-      return;
-    }
+    const downloadUrl = `/api/invoices/${transactionId}`;
   
     try {
-      const response = await fetch(facturaUrl);
+      const response = await fetch(downloadUrl);
       if (!response.ok) {
-        toast.error("Factura no encontrada en el servidor.");
-        return;
-      }  
-  
-      const { pdfUrl } = await response.json();
-      if (!pdfUrl) {
-        toast.error("No se recibió la factura.");
-        return;
+        throw new Error("Factura no encontrada o error al regenerar.");
       }
   
-      // Convertir Base64 a Blob para una mejor compatibilidad
-      const base64Data = pdfUrl.split(";base64,")[1];
-      const byteCharacters = atob(base64Data);
-      const byteNumbers = new Array(byteCharacters.length);
-      for (let i = 0; i < byteCharacters.length; i++) {
-        byteNumbers[i] = byteCharacters.charCodeAt(i);
-      }
-      const byteArray = new Uint8Array(byteNumbers);
-      const pdfBlob = new Blob([byteArray], { type: "application/pdf" });
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
   
-      // Crear URL y descargar
-      const url = URL.createObjectURL(pdfBlob);
       const link = document.createElement("a");
       link.href = url;
       link.download = `Factura_${transactionId}.pdf`;
@@ -111,14 +92,13 @@ export default function ProfilePage() {
       link.click();
       document.body.removeChild(link);
   
-      URL.revokeObjectURL(url); // Limpiar memoria
-  
-      toast.success("Descargando factura...");
+      URL.revokeObjectURL(url);
+      toast.success("Factura descargada correctamente.");
     } catch (error) {
-      console.error("❌ Error descargando la factura:", error);
+      console.error("❌ Error descargando factura:", error);
       toast.error("Error al descargar la factura.");
     }
-  };  
+  };
   
   return (
     <div className="min-h-screen bg-gray-50">
@@ -183,10 +163,7 @@ export default function ProfilePage() {
                         {/* ✅ Botón de Descargar Factura */}
                         <td className="px-4 py-2 text-center">
                         <button
-                            onClick={() => {
-                              console.log("🔵 Clic detectado en descargar factura");
-                              downloadInvoice(purchase.factura_url, purchase.transaction_id);
-                            }}
+                            onClick={() => downloadInvoice(purchase.transaction_id)}
                             className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition"
                           >
                             Descargar PDF

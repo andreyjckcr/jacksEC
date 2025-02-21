@@ -61,27 +61,28 @@ export default function CheckoutPage() {
           total: getTotalPrice(),
         }),
       });
-
+  
       const result = await response.json();
-
+  
       if (!response.ok) {
         throw new Error(result.error || "No se pudo procesar la compra");
       }
-
-      // 📄 Obtener el ID de la transacción y la URL del PDF
-      const { transaction_id, pdfUrl } = result;
-
-      // ✅ Descargar automáticamente la factura PDF
+  
+      const { transaction_id } = result;
+  
+      // 🔽 Descargar usando el transaction_id generado
+      const downloadUrl = `/api/invoices/${transaction_id}`;
+  
       const link = document.createElement("a");
-      link.href = pdfUrl;
+      link.href = downloadUrl;
       link.download = `Factura_${transaction_id}.pdf`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-
+  
       toast.success("Compra realizada con éxito ✅", { duration: 3000, position: "top-center" });
-
-      // 🔹 Vaciar carrito y redirigir a la página de éxito
+  
+      // 🔹 Limpiar carrito y redirigir
       setCartItems([]);
       router.push("/checkout/success");
     } catch (error) {
@@ -89,7 +90,7 @@ export default function CheckoutPage() {
       toast.error(errorMessage);
       setIsProcessing(false);
     }
-  };
+  };  
 
   const handleGoBack = () => {
     router.back();
