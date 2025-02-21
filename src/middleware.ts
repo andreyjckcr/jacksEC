@@ -20,5 +20,10 @@ export const config = {
     "/promotions",
     "/new-products",
     "/cart",
+    "/checkout",
+    "/despacho",
+    "/entregas",
+    "/despacho/checkout",
+    "/admin",
   ], // Agrega aquí las rutas privadas
 }

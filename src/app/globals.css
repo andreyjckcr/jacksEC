@@ -13,3 +13,11 @@ body {
   background: linear-gradient(to bottom, transparent, rgb(var(--background-end-rgb))) rgb(var(--background-start-rgb));
 }
 
+body.dialog-open {
+  overflow: hidden;
+}
+
+[data-state="checked"] svg {
+  display: none !important;
+}
+

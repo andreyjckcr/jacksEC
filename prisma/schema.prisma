@@ -8,35 +8,35 @@ datasource db {
 }
 
 model detalle_pedido_ec {
-  id          Int        @id(map: "PK__detalle___3213E83F5103D370") @default(autoincrement())
+  id          Int      @id(map: "PK__detalle___3213E83F5103D370") @default(autoincrement())
   id_pedido   Int
-  id_producto String     @db.VarChar(20)
+  id_producto String   @db.VarChar(20)
   cantidad    Int
-  precio      Decimal    @db.Decimal(10, 2)
-  subtotal    Decimal?   @db.Decimal(21, 2)
-  pedidos_ec  pedidos_ec @relation(fields: [id_pedido], references: [id], onUpdate: NoAction, map: "FK__detalle_p__id_pe__3E52440B")
+  precio      Decimal  @db.Decimal(10, 2)
+  subtotal    Decimal? @db.Decimal(21, 2)
 }
 
 model facturacion_ec {
-  id                                               Int          @id(map: "PK__facturac__3213E83FAAEE544A") @default(autoincrement())
-  id_pedido                                        Int
-  total                                            Decimal      @db.Decimal(10, 2)
-  fecha                                            DateTime?    @default(now(), map: "DF__facturaci__fecha__38996AB5") @db.DateTime
-  estado                                           String       @db.VarChar(20)
-  pedidos_ec_facturacion_ec_id_pedidoTopedidos_ec  pedidos_ec   @relation("facturacion_ec_id_pedidoTopedidos_ec", fields: [id_pedido], references: [id], onUpdate: NoAction, map: "FK__facturaci__id_pe__3A81B327")
-  pedidos_ec_pedidos_ec_id_facturaTofacturacion_ec pedidos_ec[] @relation("pedidos_ec_id_facturaTofacturacion_ec")
+  id             Int          @id(map: "PK__facturac__3213E83FAAEE544A") @default(autoincrement())
+  id_pedido      Int
+  total          Decimal      @db.Decimal(10, 2)
+  fecha          DateTime?    @default(now(), map: "DF__facturaci__fecha__38996AB5") @db.DateTime
+  estado         String       @db.VarChar(20)
+  transaction_id String?      @db.VarChar(50)
+  pedidos_ec     pedidos_ec[]
 }
 
 model pedidos_ec {
-  id                                                   Int                 @id(map: "PK__pedidos___3213E83FAAB4325B") @default(autoincrement())
-  id_usuario                                           Int
-  fecha                                                DateTime?           @default(now(), map: "DF__pedidos_e__fecha__33D4B598") @db.DateTime
-  estado                                               String              @db.VarChar(20)
-  id_factura                                           Int?
-  detalle_pedido_ec                                    detalle_pedido_ec[]
-  facturacion_ec_facturacion_ec_id_pedidoTopedidos_ec  facturacion_ec[]    @relation("facturacion_ec_id_pedidoTopedidos_ec")
-  usuarios_ecommerce                                   usuarios_ecommerce  @relation(fields: [id_usuario], references: [id], onUpdate: NoAction, map: "FK__pedidos_e__id_us__35BCFE0A")
-  facturacion_ec_pedidos_ec_id_facturaTofacturacion_ec facturacion_ec?     @relation("pedidos_ec_id_facturaTofacturacion_ec", fields: [id_factura], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_Pedidos_Facturacion")
+  id                 Int                @id(map: "PK_pedidos_ec") @default(autoincrement())
+  id_usuario         Int
+  fecha              DateTime?          @default(now(), map: "DF__pedidos_e__fecha__33D4B598") @db.DateTime
+  estado             String             @db.VarChar(20)
+  id_factura         Int?
+  monto              Decimal?           @default(0, map: "DF__pedidos_e__monto__09A971A2") @db.Decimal(10, 2)
+  email_status       String?            @default("Sin notificar", map: "DF__pedidos_e__email__0A9D95DB") @db.VarChar(50)
+  productos          String?            @db.NVarChar(Max)
+  usuarios_ecommerce usuarios_ecommerce @relation(fields: [id_usuario], references: [id], onUpdate: NoAction, map: "FK__pedidos_e__id_us__35BCFE0A")
+  facturacion_ec     facturacion_ec?    @relation(fields: [id_factura], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_Pedidos_Facturacion")
 }
 
 model usuarios_ecommerce {
@@ -114,7 +114,7 @@ model sysdiagrams {
 }
 
 model validacion_empleados {
-  Codigo_del_empleado String @id(map: "PK_validacion_empleados") @unique(map: "UQ__validaci__3DD7451DBA9EFCAE") @db.VarChar(10)
+  Codigo_del_empleado String @id(map: "PK_validacion_empleados") @unique(map: "UQ__validaci__3DD7451DBA9EFCAE") @db.VarChar(25)
   Nombre              String @db.VarChar(100)
   NIF                 String @unique(map: "UQ__validaci__C7DEC330756CA4EF") @db.VarChar(20)
 }

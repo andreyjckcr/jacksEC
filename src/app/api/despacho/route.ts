@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "../../../../lib/prisma";
 
-// ✅ Obtener productos disponibles
+// ✅ Obtener productos disponibles con imagen
 export async function GET(req: NextRequest) {
   try {
     const products = await prisma.productos_ec.findMany({
@@ -9,6 +9,7 @@ export async function GET(req: NextRequest) {
         Id: true,
         NomArticulo: true,
         Precio: true,
+        image_url: true,
       },
     });
 

@@ -81,7 +81,7 @@ export async function POST(req: NextRequest) {
         metodo_pago: "Deducción de Planilla",
         invoice: transaction_id,
       },
-    });
+    });    
 
     // Registrar productos comprados
     await Promise.all(
@@ -95,6 +95,17 @@ export async function POST(req: NextRequest) {
         });
       })
     );
+
+    // Insertar en facturacion_ec
+    await prisma.facturacion_ec.create({
+      data: {
+        id_pedido: nuevaCompra.id,
+        total,
+        fecha: nuevaCompra.fecha_hora,
+        estado: "Pedido realizado",
+        transaction_id,
+      },
+    });    
 
     // Vaciar carrito
     await prisma.carrito_ec.deleteMany({ where: { id_usuario: userId } });

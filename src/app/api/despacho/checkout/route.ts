@@ -1,49 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-// import { authOptions } from "../../auth/[...nextauth]/route";
-import { authOptions } from "../../../../../lib/authOptions"
+import { authOptions } from "../../../../../lib/authOptions";
 import { prisma } from "../../../../../lib/prisma";
 import { generateInvoicePDF } from "../../../../../lib/generateInvoice";
-import nodemailer from "nodemailer";
-
-// ✅ Configuración de Nodemailer para Outlook/Exchange
-const transporter = nodemailer.createTransport({
-  host: "smtp.office365.com",
-  port: 587,
-  secure: false,
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-  tls: {
-    ciphers: "SSLv3",
-  },
-});
-
-// ✅ Enviar correo de confirmación
-async function sendConfirmationEmail(email: string, nombre: string, transactionId: string, pdfUrl: string, total: number) {
-  const mailOptions = {
-    from: process.env.EMAIL_USER,
-    to: email,
-    subject: "Confirmación de compra - Jack's Ecommerce",
-    html: `
-      <h2>¡Gracias por tu compra, ${nombre}!</h2>
-      <p>Tu pedido ha sido procesado por el despachador.</p>
-      <p><strong>ID de la transacción:</strong> ${transactionId}</p>
-      <p><strong>Total pagado:</strong> ₡${total.toFixed(2)}</p>
-      <p>Puedes descargar tu factura desde el siguiente enlace:</p>
-      <a href="${process.env.NEXT_PUBLIC_SITE_URL}${pdfUrl}" target="_blank">Descargar Factura</a>
-      <p>Gracias por confiar en Jack's!</p>
-    `,
-  };
-
-  try {
-    await transporter.sendMail(mailOptions);
-    console.log("✅ Correo de confirmación enviado a:", email);
-  } catch (error) {
-    console.error("❌ Error enviando correo:", error);
-  }
-}
+import { sendConfirmationEmail } from "../../../../../lib/emailService";
+import { Buffer } from "buffer";
+import { startOfWeek } from "date-fns";
 
 export async function POST(req: NextRequest) {
   try {
@@ -53,12 +15,21 @@ export async function POST(req: NextRequest) {
     }
 
     const { codigoEmpleado, pedido, total } = await req.json();
+
+    if (!pedido || pedido.length === 0) {
+      return NextResponse.json({ error: "El pedido no puede estar vacío." }, { status: 400 });
+    }
+
+    const totalNumber = Number(total);
+    if (isNaN(totalNumber) || totalNumber <= 0) {
+      return NextResponse.json({ error: "El total de la compra no es válido." }, { status: 400 });
+    }
+
     const transaction_id = `INV-${Math.random().toString(36).substr(2, 9)}`;
 
-    // ✅ Buscar usuario en la BD
     const user = await prisma.usuarios_ecommerce.findUnique({
       where: { codigo_empleado: codigoEmpleado },
-      select: { id: true, nombre: true, correo: true, cedula: true },
+      select: { id: true, nombre: true, correo: true },
     });
 
     if (!user) {
@@ -67,57 +38,58 @@ export async function POST(req: NextRequest) {
 
     const userId = user.id;
 
-    // ✅ Validar que no supere el límite de ₡12,000
-    const startOfWeek = new Date();
-    startOfWeek.setDate(startOfWeek.getDate() - 7);
+    const startOfWeekDate = startOfWeek(new Date(), { weekStartsOn: 1 });
+
+    console.log("📅 Fecha de inicio de semana:", startOfWeekDate.toISOString());
 
     const totalGastado = await prisma.historial_compras_ec.aggregate({
       where: {
         id_usuario: userId,
-        fecha_hora: { gte: startOfWeek },
+        fecha_hora: { gte: startOfWeekDate },
         estado: { in: ["Pedido realizado", "Pedido en proceso"] },
       },
       _sum: { total: true },
     });
 
-    const montoGastado = totalGastado._sum.total || 0;
+    const montoGastado = Number(totalGastado._sum.total) || 0;
 
-    if (montoGastado + total > 12000) {
+    console.log("💸 Total gastado por el empleado esta semana:", montoGastado);
+    console.log("🛒 Total del pedido actual:", totalNumber);
+    console.log("➕ Suma total proyectada:", montoGastado + totalNumber);
+
+    if (montoGastado + totalNumber > 12000) {
       return NextResponse.json({
         error: `El empleado supera el límite de ₡12,000. Ha gastado ₡${montoGastado.toFixed(2)} esta semana.`,
       }, { status: 400 });
     }
 
-    // 📂 Generar factura PDF
-    const pdfUrl = await generateInvoicePDF(
-      transaction_id,
-      pedido,
-      total,
-      user.nombre,
-      userId,
-      "Despachador",
-      "En tienda",
-      new Date() // 👈 Aquí agregas la fecha
-    );    
-
-    // ✅ Guardar la compra en la BD con estado "Pedido realizado"
+    // 📝 Registrar la compra en la BD
     const nuevaCompra = await prisma.historial_compras_ec.create({
       data: {
         id_usuario: userId,
         transaction_id,
-        invoice: pdfUrl,
+        invoice: transaction_id,
         fecha_hora: new Date(),
         device: "Despachador",
         location: "En tienda",
-        total,
+        total: totalNumber,
         estado: "Pedido realizado",
         metodo_pago: "Deducción de Planilla",
       },
     });
 
-    // 📌 Guardar productos comprados
-    await Promise.all(
+    // 🛒 Guardar productos comprados y armar pedido con detalles
+    const pedidoConDetalles = await Promise.all(
       pedido.map(async (item: { Id: number; cantidad: number }) => {
+        const producto = await prisma.productos_ec.findUnique({
+          where: { Id: item.Id },
+          select: { NomArticulo: true, Precio: true },
+        });
+
+        if (!producto) {
+          throw new Error(`Producto con Id ${item.Id} no encontrado`);
+        }
+
         await prisma.productos_comprados.create({
           data: {
             id_historial: nuevaCompra.id,
@@ -125,14 +97,57 @@ export async function POST(req: NextRequest) {
             cantidad: item.cantidad,
           },
         });
+
+        return {
+          cantidad: item.cantidad,
+          productos_ec: producto,
+        };
       })
     );
 
-    // ✅ Enviar correo de confirmación
-    await sendConfirmationEmail(user.correo, user.nombre, transaction_id, pdfUrl, total);
+    await prisma.facturacion_ec.create({
+      data: {
+        id_pedido: nuevaCompra.id,
+        total: totalNumber,
+        fecha: new Date(),
+        estado: "Pedido realizado",
+        transaction_id,
+      },
+    });
+    
 
-    return NextResponse.json({ transaction_id, pdfUrl }, { status: 200 });
+    // 🗑️ Limpiar carrito del empleado después de la compra
+    await prisma.carrito_ec.deleteMany({
+      where: { id_usuario: userId },
+    });
+    console.log(`🧹 Carrito del empleado ${codigoEmpleado} limpiado después de la compra`);
 
+
+    // 📄 Generar factura PDF en Base64
+    const pdfBase64 = await generateInvoicePDF(
+      transaction_id,
+      pedidoConDetalles,
+      totalNumber,
+      user.nombre,
+      userId,
+      "Despachador",
+      "En tienda",
+      new Date()
+    );
+
+    // 🗂️ Convertir PDF Base64 a Buffer
+    const pdfBuffer = Buffer.from(pdfBase64.replace(/^data:application\/pdf;base64,/, ""), "base64");
+
+    // 📧 Enviar correo con el PDF adjunto
+    await sendConfirmationEmail(
+      user.correo,
+      user.nombre,
+      transaction_id,
+      totalNumber,
+      pdfBuffer
+    );
+
+    return NextResponse.json({ transaction_id, pdfBase64 }, { status: 200 });
   } catch (error) {
     console.error("❌ Error en el checkout del despacho:", error);
     return NextResponse.json({ error: "Error al procesar la compra" }, { status: 500 });
