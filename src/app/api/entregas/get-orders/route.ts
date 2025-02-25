@@ -28,9 +28,15 @@ export async function GET(req: NextRequest) {
       monto: Number(pedido.monto) || 0,
       email_status: pedido.email_status,
       transaction_id: pedido.facturacion_ec?.transaction_id || "N/A",
-    }));    
+    }));
 
-    return NextResponse.json(pedidosConDetalles, { status: 200 });
+    return new NextResponse(JSON.stringify(pedidosConDetalles), {
+      status: 200,
+      headers: {
+        "Content-Type": "application/json",
+        "Cache-Control": "no-store, max-age=0, must-revalidate",
+      },
+    });
   } catch (error) {
     console.error("❌ Error obteniendo pedidos:", error);
     return NextResponse.json(

@@ -139,13 +139,17 @@ export async function POST(req: NextRequest) {
     const pdfBuffer = Buffer.from(pdfBase64.replace(/^data:application\/pdf;base64,/, ""), "base64");
 
     // 📧 Enviar correo con el PDF adjunto
-    await sendConfirmationEmail(
-      user.correo,
-      user.nombre,
-      transaction_id,
-      totalNumber,
-      pdfBuffer
-    );
+    try {
+      await sendConfirmationEmail(
+        user.correo,
+        user.nombre,
+        transaction_id,
+        total,
+        pdfBuffer
+      );
+    } catch (error) {
+      console.error("❌ Error enviando correo:", error);
+    }
 
     return NextResponse.json({ transaction_id, pdfBase64 }, { status: 200 });
   } catch (error) {

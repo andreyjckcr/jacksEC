@@ -26,6 +26,8 @@ interface Pedido {
   transaction_id: string;
 }
 
+export const dynamic = "force-dynamic";
+
 export default function EntregasPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
@@ -140,12 +142,14 @@ export default function EntregasPage() {
   
       if (!res.ok) throw new Error("No se pudo actualizar el estado");
   
+      const data = await res.json();
       toast.success("Estado actualizado correctamente");
-      
-      // Espera 1 segundo para evitar problemas de rehidratación en producción
-      await new Promise((resolve) => setTimeout(resolve, 1000));
   
-      fetchPedidos(); // ⚡ Recargar los pedidos correctamente
+      await new Promise((resolve) => setTimeout(resolve, 1000)); // Simulación de carga 1 seg
+      
+      // **Asegurar que se actualice el frontend**
+      fetchPedidos();  // Vuelve a obtener los pedidos desde la BD
+  
     } catch (error) {
       console.error("❌ Error actualizando estado:", error);
       toast.error("Error al actualizar el estado");

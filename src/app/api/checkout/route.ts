@@ -106,13 +106,18 @@ export async function POST(req: NextRequest) {
     // Vaciar carrito
     await prisma.carrito_ec.deleteMany({ where: { id_usuario: userId } });
 
-    await sendConfirmationEmail(
-      user.correo,
-      user.nombre,
-      transaction_id,
-      total,
-      pdfBuffer
-    );
+    // 📧 Enviar correo con el PDF adjunto
+    try {
+      await sendConfirmationEmail(
+        user.correo,
+        user.nombre,
+        transaction_id,
+        total,
+        pdfBuffer
+      );
+    } catch (error) {
+      console.error("❌ Error enviando correo:", error);
+    }
 
     // ✅ Al devolver el transaction_id, el frontend ya sabe cómo descargar el PDF automáticamente
     return NextResponse.json({ transaction_id }, { status: 200 });
