@@ -9,9 +9,11 @@ module.exports = {
           exec_mode: 'fork',
           env: {
               NODE_ENV: 'development',
+              NEXTAUTH_URL: 'http://localhost:3000',
           },
           env_production: {
               NODE_ENV: 'production',
+              NEXTAUTH_URL: 'http://localhost:3000',
           }
       },
   ],
