@@ -99,9 +99,9 @@ export async function POST(req: NextRequest) {
         total,
         fecha: nuevaCompra.fecha_hora,
         estado: "Pedido realizado",
-        transaction_id,
+        transaction_id: transaction_id, // Aquí cambio la asignación explícita
       },
-    });    
+    });      
 
     // Vaciar carrito
     await prisma.carrito_ec.deleteMany({ where: { id_usuario: userId } });
