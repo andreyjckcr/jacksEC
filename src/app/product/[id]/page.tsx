@@ -8,6 +8,8 @@ import { Button } from "../../../../components/ui/button";
 import { Navbar } from "../../../components/Navbar";
 import { toast } from "react-hot-toast";
 import { useCartStore } from "../../cartStore/cartStore";
+// Importa íconos de React, heroicons, lucide, etc., si los necesitas
+// import { Minus, Plus } from "lucide-react";
 
 interface Product {
   Id: number;
@@ -26,6 +28,10 @@ export default function ProductPage({ params }: { params: { id: string } }) {
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // Estado local para la cantidad que el usuario quiere agregar
+  const [quantity, setQuantity] = useState<number>(1);
+
+  // Traemos la acción de aumentar la cuenta del carrito (badge) si la usas
   const increaseCartCount = useCartStore.getState().increaseCartCount;
 
   useEffect(() => {
@@ -45,6 +51,7 @@ export default function ProductPage({ params }: { params: { id: string } }) {
     fetchProduct();
   }, [params.id]);
 
+  // Función para agregar al carrito con la cantidad actual
   const handleAddToCart = async () => {
     if (!session) {
       toast.error("Debes iniciar sesión para agregar productos al carrito.");
@@ -55,12 +62,16 @@ export default function ProductPage({ params }: { params: { id: string } }) {
       const response = await fetch("/api/cart", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id_producto: product?.Id, cantidad: 1 }),
+        body: JSON.stringify({
+          id_producto: product?.Id,
+          cantidad: quantity, // Aquí mandamos la cantidad seleccionada
+        }),
       });
 
       if (!response.ok) throw new Error("No se pudo agregar al carrito");
 
-      increaseCartCount(1);
+      // Actualiza el contador global del carrito (si es que lo estás usando en la store)
+      increaseCartCount(quantity);
 
       toast.success("Producto agregado al carrito 🛒");
     } catch (error) {
@@ -74,6 +85,19 @@ export default function ProductPage({ params }: { params: { id: string } }) {
   function handleGoBack() {
     router.back();
   }
+
+  // Funciones para manipular quantity
+  const handleDecrease = () => {
+    setQuantity((prev) => (prev > 1 ? prev - 1 : 1));
+  };
+
+  const handleIncrease = () => {
+    // Opcionalmente podrías verificar stock si lo deseas:
+    // if (quantity < product.stock) {
+    //   setQuantity(prev => prev + 1);
+    // }
+    setQuantity((prev) => prev + 1);
+  };
 
   return (
     <>
@@ -91,7 +115,8 @@ export default function ProductPage({ params }: { params: { id: string } }) {
             <div className="p-6 bg-gray-50 rounded-lg shadow-md">
               <h1 className="text-3xl font-bold mb-4 text-gray-900">{product.NomArticulo}</h1>
               <p className="text-lg text-gray-700 mb-4">
-                Categoría: <span className="font-semibold">{product.categorias || "Sin Categoría"}</span>
+                Categoría:{" "}
+                <span className="font-semibold">{product.categorias || "Sin Categoría"}</span>
               </p>
               <p className="text-xl font-semibold text-blue-600 mb-4">
                 ₡{typeof product.Precio === "number" ? product.Precio.toFixed(2) : "0.00"}
@@ -99,8 +124,29 @@ export default function ProductPage({ params }: { params: { id: string } }) {
               <p className="text-gray-600 mb-4">
                 Stock disponible: <span className="font-semibold">{product.stock}</span>
               </p>
-  
-              {/* 🔹 Contenedor para los botones con distribución flexible */}
+
+              {/* Sección para aumentar/disminuir la cantidad */}
+              <div className="flex items-center space-x-4 mb-4">
+              <div className="flex items-center space-x-4 mb-4">
+                <Button
+                  variant="outline"
+                  className="w-10 h-10 flex items-center justify-center"
+                  onClick={handleDecrease}
+                >
+                  -
+                </Button>
+                <span className="text-center w-8">{quantity}</span>
+                <Button
+                  variant="outline"
+                  className="w-10 h-10 flex items-center justify-center"
+                  onClick={handleIncrease}
+                >
+                  +
+                </Button>
+              </div>
+              </div>
+
+              {/* 🔹 Contenedor para los botones principales */}
               <div className="flex flex-col md:flex-row gap-4">
                 <Button
                   onClick={handleGoBack}
@@ -109,9 +155,8 @@ export default function ProductPage({ params }: { params: { id: string } }) {
                 >
                   ← Regresar
                 </Button>
-  
-                <Button 
-                  onClick={handleAddToCart} 
+                <Button
+                  onClick={handleAddToCart}
                   className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 w-full md:w-auto"
                 >
                   Agregar al Carrito
@@ -124,4 +169,3 @@ export default function ProductPage({ params }: { params: { id: string } }) {
     </>
   );
 }
-
