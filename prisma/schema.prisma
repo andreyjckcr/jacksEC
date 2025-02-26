@@ -64,6 +64,9 @@ model productos_ec {
   Precio              Int
   categorias          String                @db.VarChar(100)
   image_url           String                @db.VarChar(255)
+  UnidadCaja          Decimal?              @db.Decimal(18, 0)
+  Peso                String?               @db.NVarChar(10)
+  Embalaje            String?               @db.NVarChar(10)
   carrito_ec          carrito_ec[]
   productos_comprados productos_comprados[]
 }

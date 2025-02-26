@@ -19,6 +19,9 @@ interface Product {
   CodCabys: string;
   stock: number;
   categorias?: string;
+  UnidadCaja?: number | null;
+  Peso?: string | null;
+  Embalaje?: string | null;
 }
 
 interface ProductCardProps {
@@ -106,34 +109,56 @@ export function ProductCard({ product }: ProductCardProps) {
 
   return (
     <div
-      className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg hover:scale-105 transition-all duration-200 ease-in-out cursor-pointer"
-      onClick={handleCardClick}
-    >
-      <div className="relative h-48 w-full">
-        <Image
-          src={product.image_url || "/fallback-image.jpg"}
-          alt={product.NomArticulo}
-          fill
-          className="object-contain p-4"
-          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-        />
-      </div>
-      <div className="p-4">
-        <h3 className="text-lg font-semibold mb-2 truncate w-full max-w-[180px]">
-          {product.NomArticulo.length > 25 ? product.NomArticulo.substring(0, 25) + "..." : product.NomArticulo}
-        </h3>
-        {product.categorias && <p className="text-gray-600 mb-2 text-sm">Categoría: {product.categorias}</p>}
-        <p className="text-gray-600 mb-2 text-sm">Stock disponible: {product.stock}</p>
-        <div className="flex justify-between items-center">
-          <span className="text-xl font-bold">₡{priceToShow.toFixed(0)}</span>
-          <Button
-            onClick={handleAddToCart}
-            className="bg-gradient-to-br from-[#1B3668] to-[#2a4d8f] text-white hover:from-[#2a4d8f] hover:to-[#1B3668] focus:ring-2 focus:ring-[#1B3668] focus:outline-none"
-          >
-            Agregar al Carrito
-          </Button>
+        className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg hover:scale-105 transition-all duration-200 ease-in-out cursor-pointer 
+                  flex flex-col h-[380px] md:h-[420px] lg:h-[450px]" // Fijamos alturas uniformes
+        onClick={handleCardClick}
+        >
+        {/* Imagen */}
+        <div className="relative h-48 w-full flex-shrink-0">
+          <Image
+            src={product.image_url || "/fallback-image.jpg"}
+            alt={product.NomArticulo}
+            fill
+            className="object-contain p-4"
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+          />
+        </div>
+
+        {/* Contenedor del contenido */}
+        <div className="p-4 flex flex-col flex-grow justify-between">
+          {/* Título del Producto */}
+          <h3 className="text-lg font-semibold mb-2 truncate w-full max-w-[180px]">
+            {product.NomArticulo.length > 25
+              ? product.NomArticulo.substring(0, 25) + "..."
+              : product.NomArticulo}
+          </h3>
+
+          {/* Categoría */}
+          {product.categorias && (
+            <p className="text-gray-600 mb-2 text-sm">Categoría: {product.categorias}</p>
+          )}
+
+          {/* Unidades (Embalaje) */}
+          <p className="text-gray-600 mb-2 text-sm">Unidades: {product.Embalaje ?? ""}</p>
+
+          {/* Contenedor de precio y botón, asegurando que el botón siempre esté al fondo */}
+          <div className="mt-auto">
+            <div className="flex justify-between items-center">
+              <span className="text-xl font-bold">
+                ₡{priceToShow.toFixed(0)}{" "}
+                <span className="text-sm ml-1 text-gray-500">(I.V.I)</span>
+              </span>
+              <Button
+                onClick={handleAddToCart}
+                className="bg-gradient-to-br from-[#1B3668] to-[#2a4d8f] text-white 
+                          hover:from-[#2a4d8f] hover:to-[#1B3668] focus:ring-2 focus:ring-[#1B3668] 
+                          focus:outline-none py-3 px-5 w-full"
+              >
+                Agregar al Carrito
+              </Button>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
-  );
+    );
 }
