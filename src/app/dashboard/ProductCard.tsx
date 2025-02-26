@@ -110,7 +110,7 @@ export function ProductCard({ product }: ProductCardProps) {
   return (
     <div
         className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg hover:scale-105 transition-all duration-200 ease-in-out cursor-pointer 
-                  flex flex-col h-[380px] md:h-[420px] lg:h-[450px]" // Fijamos alturas uniformes
+                  flex flex-col h-[380px] md:h-[360px] lg:h-[400px]" // Fijamos alturas uniformes
         onClick={handleCardClick}
         >
         {/* Imagen */}

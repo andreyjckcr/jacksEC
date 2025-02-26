@@ -8,18 +8,14 @@ import { Button } from "../../../../components/ui/button";
 import { Navbar } from "../../../components/Navbar";
 import { toast } from "react-hot-toast";
 import { useCartStore } from "../../cartStore/cartStore";
-// Importa íconos de React, heroicons, lucide, etc., si los necesitas
-// import { Minus, Plus } from "lucide-react";
 
 interface Product {
   Id: number;
   NomArticulo: string;
   Precio: number;
-  PrecioImpuesto: number;
   image_url?: string | null;
-  CodCabys: string;
-  stock: number;
   categorias?: string;
+  Embalaje?: string | null; // ✅ Se reemplaza stock por Embalaje
 }
 
 export default function ProductPage({ params }: { params: { id: string } }) {
@@ -27,11 +23,7 @@ export default function ProductPage({ params }: { params: { id: string } }) {
   const router = useRouter();
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
-
-  // Estado local para la cantidad que el usuario quiere agregar
   const [quantity, setQuantity] = useState<number>(1);
-
-  // Traemos la acción de aumentar la cuenta del carrito (badge) si la usas
   const increaseCartCount = useCartStore.getState().increaseCartCount;
 
   useEffect(() => {
@@ -51,7 +43,6 @@ export default function ProductPage({ params }: { params: { id: string } }) {
     fetchProduct();
   }, [params.id]);
 
-  // Función para agregar al carrito con la cantidad actual
   const handleAddToCart = async () => {
     if (!session) {
       toast.error("Debes iniciar sesión para agregar productos al carrito.");
@@ -64,15 +55,13 @@ export default function ProductPage({ params }: { params: { id: string } }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           id_producto: product?.Id,
-          cantidad: quantity, // Aquí mandamos la cantidad seleccionada
+          cantidad: quantity,
         }),
       });
 
       if (!response.ok) throw new Error("No se pudo agregar al carrito");
 
-      // Actualiza el contador global del carrito (si es que lo estás usando en la store)
       increaseCartCount(quantity);
-
       toast.success("Producto agregado al carrito 🛒");
     } catch (error) {
       toast.error("Error al agregar producto");
@@ -86,16 +75,11 @@ export default function ProductPage({ params }: { params: { id: string } }) {
     router.back();
   }
 
-  // Funciones para manipular quantity
   const handleDecrease = () => {
     setQuantity((prev) => (prev > 1 ? prev - 1 : 1));
   };
 
   const handleIncrease = () => {
-    // Opcionalmente podrías verificar stock si lo deseas:
-    // if (quantity < product.stock) {
-    //   setQuantity(prev => prev + 1);
-    // }
     setQuantity((prev) => prev + 1);
   };
 
@@ -115,18 +99,21 @@ export default function ProductPage({ params }: { params: { id: string } }) {
             <div className="p-6 bg-gray-50 rounded-lg shadow-md">
               <h1 className="text-3xl font-bold mb-4 text-gray-900">{product.NomArticulo}</h1>
               <p className="text-lg text-gray-700 mb-4">
-                Categoría:{" "}
-                <span className="font-semibold">{product.categorias || "Sin Categoría"}</span>
+                Categoría: <span className="font-semibold">{product.categorias || "Sin Categoría"}</span>
               </p>
+
+              {/* ✅ Agregamos la leyenda I.V.I. al lado del precio */}
               <p className="text-xl font-semibold text-blue-600 mb-4">
-                ₡{typeof product.Precio === "number" ? product.Precio.toFixed(2) : "0.00"}
+                ₡{typeof product.Precio === "number" ? product.Precio.toFixed(2) : "0.00"}{" "}
+                <span className="text-sm ml-1 text-gray-500">(I.V.I)</span>
               </p>
+
+              {/* ✅ Mostramos Embalaje en lugar de stock */}
               <p className="text-gray-600 mb-4">
-                Stock disponible: <span className="font-semibold">{product.stock}</span>
+                Unidades: <span className="font-semibold">{product.Embalaje ?? ""}</span>
               </p>
 
               {/* Sección para aumentar/disminuir la cantidad */}
-              <div className="flex items-center space-x-4 mb-4">
               <div className="flex items-center space-x-4 mb-4">
                 <Button
                   variant="outline"
@@ -144,9 +131,8 @@ export default function ProductPage({ params }: { params: { id: string } }) {
                   +
                 </Button>
               </div>
-              </div>
 
-              {/* 🔹 Contenedor para los botones principales */}
+              {/* Botones principales */}
               <div className="flex flex-col md:flex-row gap-4">
                 <Button
                   onClick={handleGoBack}
