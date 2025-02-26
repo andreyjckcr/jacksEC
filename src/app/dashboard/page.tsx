@@ -7,78 +7,7 @@ import { Search, ShoppingCart, Minus, Plus, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Button } from "../../../components/ui/button";
 import Image from "next/image";
-import { create } from "zustand";
-
-// Interfaz de Producto
-export interface Product {
-  Id: number;
-  CodArticulo: string;
-  NomArticulo: string;
-  Precio: number;
-  PrecioImpuesto?: number;
-  image_url?: string | null;
-  categorias?: string;
-  Embalaje?: string | null;
-  CodCabys?: string;
-  stock?: number;
-}
-
-// Propiedades que recibe ProductCard
-export interface ProductCardProps {
-  product: Product;
-}
-
-// Interfaz para un item del carrito
-export interface CartItem {
-  product: Product;
-  cantidad: number;
-}
-
-// Interfaz del estado del carrito (si usas el backend, este store ya no se usará para obtener el carrito)
-export interface CartState {
-  cartItems: CartItem[];
-  addToCart: (product: Product, cantidad?: number) => void;
-  increaseQuantity: (productId: number) => void;
-  decreaseQuantity: (productId: number) => void;
-  removeFromCart: (productId: number) => void;
-}
-
-// Si prefieres manejar todo desde el backend, este store puede omitirse
-export const useCartStore = create<CartState>((set) => ({
-  cartItems: [],
-  addToCart: (product, cantidad = 1) =>
-    set((state) => {
-      const existingItem = state.cartItems.find(item => item.product.Id === product.Id);
-      if (existingItem) {
-        return {
-          cartItems: state.cartItems.map(item =>
-            item.product.Id === product.Id
-              ? { ...item, cantidad: item.cantidad + cantidad }
-              : item
-          ),
-        };
-      }
-      return { cartItems: [...state.cartItems, { product, cantidad }] };
-    }),
-  increaseQuantity: (productId) =>
-    set((state) => ({
-      cartItems: state.cartItems.map(item =>
-        item.product.Id === productId ? { ...item, cantidad: item.cantidad + 1 } : item
-      ),
-    })),
-  decreaseQuantity: (productId) =>
-    set((state) => ({
-      cartItems: state.cartItems.map(item =>
-        item.product.Id === productId
-          ? { ...item, cantidad: Math.max(1, item.cantidad - 1) }
-          : item
-      ),
-    })),
-  removeFromCart: (productId) =>
-    set((state) => ({
-      cartItems: state.cartItems.filter(item => item.product.Id !== productId),
-    })),
-}));
+import { Product, CartItem } from "../types/product"; // Importa los tipos compartidos
 
 export default function DashboardPage() {
   // Estados para productos y búsqueda
@@ -96,16 +25,15 @@ export default function DashboardPage() {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [cartLoading, setCartLoading] = useState<boolean>(false);
 
-  // Función para traer los items del carrito desde el backend
+  // Función para traer los items del carrito desde el backend (tu endpoint en /api/cart)
   const fetchCartItems = async () => {
     try {
       setCartLoading(true);
       const res = await fetch("/api/cart");
       if (!res.ok) throw new Error("Error al obtener el carrito");
       const data = await res.json();
-      // Asumimos que la API devuelve cada item con una propiedad "productos_ec" con los datos del producto.
+      // Suponemos que la API devuelve cada item con la propiedad "productos_ec" (detalles del producto)
       const mapped: CartItem[] = data.map((item: any) => ({
-        // Puedes ajustar la propiedad 'id' según lo que devuelva tu API
         product: item.productos_ec,
         cantidad: item.cantidad,
       }));
@@ -117,16 +45,16 @@ export default function DashboardPage() {
     }
   };
 
-  // Lógica para actualizar el carrito en tiempo real (polling cada 3 segundos)
+  // Actualiza el carrito en tiempo real (polling cada 3 segundos)
   useEffect(() => {
     fetchCartItems();
     const interval = setInterval(() => {
       fetchCartItems();
-    }, 3000); // Actualiza cada 3 segundos
+    }, 3000);
     return () => clearInterval(interval);
   }, []);
 
-  // Funciones para actualizar la cantidad y eliminar items (actualizan backend y refrescan el carrito)
+  // Funciones para actualizar la cantidad y eliminar items (llamadas al backend)
   const increaseQuantity = async (productId: number) => {
     try {
       const item = cartItems.find((i) => i.product.Id === productId);
@@ -198,7 +126,7 @@ export default function DashboardPage() {
         setProducts(data);
         setGroupedProducts(grouped);
       } catch (error) {
-        console.error("❌ Error al obtener productos:", error);
+        console.error("Error al obtener productos:", error);
       } finally {
         setLoading(false);
       }
@@ -219,7 +147,7 @@ export default function DashboardPage() {
       const data: Product[] = await response.json();
       setSearchResults(data);
     } catch (error) {
-      console.error("❌ Error al buscar productos:", error);
+      console.error("Error al buscar productos:", error);
     }
   };
 
