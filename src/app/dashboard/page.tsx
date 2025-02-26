@@ -7,15 +7,16 @@ import { Search, ShoppingCart, Minus, Plus, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Button } from "../../../components/ui/button";
 import Image from "next/image";
-import { Product, CartItem } from "../types/product"; // Importa los tipos compartidos
+// Importamos el tipo compartido pero lo renombramos a Product2 para este archivo
+import { Product as Product2, CartItem } from "../types/product";
 
 export default function DashboardPage() {
-  // Estados para productos y búsqueda
-  const [products, setProducts] = useState<Product[]>([]);
+  // Usamos Product2 para los productos del dashboard (donde PrecioImpuesto es opcional)
+  const [products, setProducts] = useState<Product2[]>([]);
   const [loading, setLoading] = useState(true);
-  const [groupedProducts, setGroupedProducts] = useState<{ [key: string]: Product[] }>({});
+  const [groupedProducts, setGroupedProducts] = useState<{ [key: string]: Product2[] }>({});
   const [searchTerm, setSearchTerm] = useState("");
-  const [searchResults, setSearchResults] = useState<Product[]>([]);
+  const [searchResults, setSearchResults] = useState<Product2[]>([]);
   const router = useRouter();
 
   // Estado para mostrar/ocultar el mini carrito
@@ -25,14 +26,14 @@ export default function DashboardPage() {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [cartLoading, setCartLoading] = useState<boolean>(false);
 
-  // Función para traer los items del carrito desde el backend (tu endpoint en /api/cart)
+  // Función para traer los items del carrito desde el backend
   const fetchCartItems = async () => {
     try {
       setCartLoading(true);
       const res = await fetch("/api/cart");
       if (!res.ok) throw new Error("Error al obtener el carrito");
       const data = await res.json();
-      // Suponemos que la API devuelve cada item con la propiedad "productos_ec" (detalles del producto)
+      // Se asume que la API devuelve cada item con la propiedad "productos_ec" (detalles del producto)
       const mapped: CartItem[] = data.map((item: any) => ({
         product: item.productos_ec,
         cantidad: item.cantidad,
@@ -113,9 +114,9 @@ export default function DashboardPage() {
     async function fetchProducts() {
       try {
         const response = await fetch("/api/products");
-        const data: Product[] = await response.json();
+        const data: Product2[] = await response.json();
         // Agrupa los productos por categorías
-        const grouped = data.reduce((acc: { [key: string]: Product[] }, product) => {
+        const grouped = data.reduce((acc: { [key: string]: Product2[] }, product) => {
           const category = product.categorias || "Sin Categoría";
           if (!acc[category]) {
             acc[category] = [];
@@ -144,7 +145,7 @@ export default function DashboardPage() {
     }
     try {
       const response = await fetch(`/api/products?search=${term}`);
-      const data: Product[] = await response.json();
+      const data: Product2[] = await response.json();
       setSearchResults(data);
     } catch (error) {
       console.error("Error al buscar productos:", error);
@@ -288,7 +289,11 @@ export default function DashboardPage() {
                   <h1 className="text-xl font-semibold mb-4 text-[#1B3668]">{category}</h1>
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                     {products.map((product) => (
-                      <ProductCard key={product.Id} product={product} />
+                      // Aquí convertimos el producto a tipo Product para ProductCard
+                      <ProductCard
+                        key={product.Id}
+                        product={{ ...product, PrecioImpuesto: product.PrecioImpuesto ?? 0, CodCabys: product.CodCabys ?? "", stock: product.stock ?? 0 }}
+                      />
                     ))}
                   </div>
                 </div>
