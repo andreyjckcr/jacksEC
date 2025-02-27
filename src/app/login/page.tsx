@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import toast from "react-hot-toast";
@@ -11,10 +11,48 @@ import Image from "next/image";
 export default function LoginPage() {
   const [cedula, setCedula] = useState("");
   const [codigoEmpleado, setCodigoEmpleado] = useState("");
+  const [intentosRestantes, setIntentosRestantes] = useState(5);
+  const [bloqueadoHasta, setBloqueadoHasta] = useState<number | null>(null);
+  const [tiempoRestante, setTiempoRestante] = useState(0);
   const router = useRouter();
+
+  useEffect(() => {
+    const storedBloqueo = localStorage.getItem("bloqueadoHasta");
+    if (storedBloqueo) {
+      const bloqueoTime = parseInt(storedBloqueo, 10);
+      const now = Date.now();
+      if (bloqueoTime > now) {
+        setBloqueadoHasta(bloqueoTime);
+      } else {
+        localStorage.removeItem("bloqueadoHasta");
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    if (bloqueadoHasta) {
+      const interval = setInterval(() => {
+        const now = Date.now();
+        if (bloqueadoHasta > now) {
+          setTiempoRestante(Math.ceil((bloqueadoHasta - now) / 1000));
+        } else {
+          setBloqueadoHasta(null);
+          setIntentosRestantes(5);
+          localStorage.removeItem("bloqueadoHasta");
+          clearInterval(interval);
+        }
+      }, 1000);
+      return () => clearInterval(interval);
+    }
+  }, [bloqueadoHasta]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (bloqueadoHasta) {
+      toast.error(`Cuenta bloqueada. Espera ${tiempoRestante} segundos.`);
+      return;
+    }
+
     const result = await signIn("credentials", {
       cedula,
       codigo_empleado: codigoEmpleado,
@@ -22,23 +60,30 @@ export default function LoginPage() {
     });
 
     if (!result?.error) {
-      // ✅ Obtener la sesión para verificar el rol
       const res = await fetch("/api/auth/session");
       const session = await res.json();
 
-      console.log("🔍 Sesión obtenida:", session); // 👀 Verifica si el rol se obtiene correctamente
+      console.log("🔍 Sesión obtenida:", session);
 
       if (session.user?.rol === "administrador") {
-        router.push("/admin"); // 🚀 Redirigir a la página de administrador
+        router.push("/admin");
       } else if (session.user?.rol === "despachante") {
-        router.push("/despacho"); // 🚀 Redirigir a la página de despachante
+        router.push("/despacho");
       } else {
-        router.push("/dashboard"); // 🚀 Redirigir al dashboard normal
+        router.push("/dashboard");
       }
 
       toast.success("Inicio de sesión exitoso");
     } else {
-      toast.error("Error en el inicio de sesión");
+      setIntentosRestantes((prev) => prev - 1);
+      if (intentosRestantes - 1 <= 0) {
+        const bloqueoTime = Date.now() + 2 * 60 * 1000; // 2 minutos de bloqueo
+        setBloqueadoHasta(bloqueoTime);
+        localStorage.setItem("bloqueadoHasta", bloqueoTime.toString());
+        toast.error("Demasiados intentos fallidos. Cuenta bloqueada por 2 minutos.");
+      } else {
+        toast.error(`Cédula o código incorrectos. Intentos restantes: ${intentosRestantes - 1}`);
+      }
     }
   };
 
@@ -62,27 +107,33 @@ export default function LoginPage() {
 
       <div className="flex-grow flex items-center justify-center p-4 overflow-y-auto bg-white">
         <div className="w-full max-w-[320px] space-y-4">
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <Input
-              type="text"
-              placeholder="Cédula"
-              value={cedula}
-              onChange={(e) => setCedula(e.target.value)}
-              required
-              className="h-12"
-            />
-            <Input
-              type="text"
-              placeholder="Código de Empleado"
-              value={codigoEmpleado}
-              onChange={(e) => setCodigoEmpleado(e.target.value)}
-              required
-              className="h-12"
-            />
-            <Button type="submit" className="w-full bg-black text-white hover:bg-gray-800 h-12 text-base font-normal">
-              Iniciar Sesión
-            </Button>
-          </form>
+          {bloqueadoHasta ? (
+            <div className="text-center text-red-600 font-semibold">
+              Cuenta bloqueada. Espera {tiempoRestante} segundos.
+            </div>
+          ) : (
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <Input
+                type="text"
+                placeholder="Cédula"
+                value={cedula}
+                onChange={(e) => setCedula(e.target.value)}
+                required
+                className="h-12"
+              />
+              <Input
+                type="text"
+                placeholder="Código de Empleado"
+                value={codigoEmpleado}
+                onChange={(e) => setCodigoEmpleado(e.target.value)}
+                required
+                className="h-12"
+              />
+              <Button type="submit" className="w-full bg-black text-white hover:bg-gray-800 h-12 text-base font-normal">
+                Iniciar Sesión
+              </Button>
+            </form>
+          )}
         </div>
       </div>
     </div>

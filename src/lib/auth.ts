@@ -1,21 +1,18 @@
-import { NextAuthOptions, Session, DefaultSession } from "next-auth";
+import { NextAuthOptions, User as NextAuthUser } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { PrismaClient } from "@prisma/client";
+import { sendLoginNotification } from "../../lib/emailService";
 
 const prisma = new PrismaClient();
 
-// 🔹 Extender la sesión y el usuario para incluir ID y Rol
 declare module "next-auth" {
-  interface Session {
-    user: {
-      id: string;
-      rol: string;
-    } & DefaultSession["user"];
-  }
-
   interface User {
     id: string;
     rol: string;
+  }
+
+  interface Session {
+    user: User;
   }
 }
 
@@ -27,23 +24,52 @@ export const authOptions: NextAuthOptions = {
         cedula: { label: "Cédula", type: "text" },
         codigo_empleado: { label: "Código de Empleado", type: "text" },
       },
-      async authorize(credentials) {
-        if (!credentials) {
-          throw new Error("Faltan credenciales");
-        }
+      async authorize(credentials, req) {
+        if (!credentials) throw new Error("Faltan credenciales");
 
         const { cedula, codigo_empleado } = credentials;
 
-        // ✅ Buscar usuario por cédula y código de empleado
+        // ✅ Obtener IP y User-Agent del usuario
+        const ip = req.headers ? (req.headers["x-forwarded-for"] || req.headers["x-real-ip"] || "IP desconocida") : "IP desconocida";
+        const userAgent = req.headers ? (req.headers["user-agent"] || "Desconocido") : "Desconocido";
+
+        // ✅ Buscar usuario en la BD
         const user = await prisma.usuarios_ecommerce.findFirst({
           where: { cedula, codigo_empleado },
-          select: { id: true, nombre: true, rol: true, estado: true },
+          select: {
+            id: true,
+            nombre: true,
+            rol: true,
+            estado: true,
+            intentosFallidos: true,
+            bloqueoHasta: true,
+            correo: true,
+          },
         });
 
-        // 🚨 Verificar si el usuario existe y está activo
+        // 🚨 Validaciones
         if (!user || user.estado !== "Activo") {
-          console.log("❌ Usuario no válido");
-          return null;
+          throw new Error("Usuario no válido o inactivo");
+        }
+
+        // 🚨 Verificar si el usuario está bloqueado
+        const ahora = new Date();
+        if (user.bloqueoHasta && ahora < user.bloqueoHasta) {
+          const segundosRestantes = Math.ceil((user.bloqueoHasta.getTime() - ahora.getTime()) / 1000);
+          throw new Error(`Cuenta bloqueada. Intenta en ${segundosRestantes} segundos`);
+        }
+
+        // ✅ Si las credenciales son correctas, reiniciar intentos fallidos
+        await prisma.usuarios_ecommerce.update({
+          where: { id: user.id },
+          data: { intentosFallidos: 0, bloqueoHasta: null },
+        });
+
+        // ✅ Enviar notificación de inicio de sesión
+        try {
+          await sendLoginNotification(user.correo, user.nombre, ip as string, userAgent);
+        } catch (error) {
+          console.error("❌ Error enviando notificación de inicio de sesión:", error);
         }
 
         return {
@@ -77,6 +103,6 @@ export const authOptions: NextAuthOptions = {
   },
   secret: process.env.NEXTAUTH_SECRET,
   session: {
-    strategy: "jwt", // ✅ Usar JWT para evitar problemas de sesión
+    strategy: "jwt",
   },
 };
