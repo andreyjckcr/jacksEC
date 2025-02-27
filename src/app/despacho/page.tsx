@@ -229,19 +229,12 @@ export default function DespachoPage() {
             Cerrar sesión
           </button>
 
-         {/*} <Button
+          <Button
             onClick={() => router.push("/entregas")}
             className="bg-gradient-to-br from-[#1B3668] via-[#1B3668] to-[#2a4d8f] text-white rounded-md"
           >
             Ir a Portal de Gestión de Ventas
-          </Button> */}
-
-          <Button
-            onClick={() => router.push("/entregas")}
-            className="border px-4 py-2 text-center font-medium"
-          >
-            Ir a Portal de Gestión de Ventas
-          </Button>
+          </Button> 
         </div>
       </div>
   

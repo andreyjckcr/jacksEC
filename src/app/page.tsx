@@ -25,6 +25,7 @@ export default function Home() {
       {/* Columna de botones */}
       <div className="w-full md:w-1/2 flex items-center justify-center p-8">
         <div className="w-full max-w-[320px] flex flex-col gap-4">
+          <p className="text-x2 md:text-1xl font-semibold text-gray-800 text-center">Si eres empleado JACK´S, inicia sesión aquí para comprar nuestros productos</p>
           <Link href="/login" className="block">
             <Button
               className="w-full bg-black text-white hover:bg-gray-800 h-12 text-base font-normal"
@@ -33,14 +34,14 @@ export default function Home() {
               Iniciar Sesión
             </Button>
           </Link>
-          <Link href="/register" className="block">
+         {/*<Link href="/register" className="block">
             <Button
               className="w-full bg-black text-white hover:bg-gray-800 h-12 text-base font-normal"
               variant="default"
             >
               Crear Cuenta
             </Button>
-          </Link>
+          </Link>*/}
         </div>
       </div>
     </div>

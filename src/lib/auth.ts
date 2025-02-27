@@ -4,7 +4,7 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-// Extend the Session and User types to include id and rol
+// 🔹 Extender la sesión y el usuario para incluir ID y Rol
 declare module "next-auth" {
   interface Session {
     user: {
@@ -24,30 +24,33 @@ export const authOptions: NextAuthOptions = {
     CredentialsProvider({
       name: "Credentials",
       credentials: {
-        email: { label: "Correo Electrónico", type: "email" },
+        cedula: { label: "Cédula", type: "text" },
         codigo_empleado: { label: "Código de Empleado", type: "text" },
       },
       async authorize(credentials) {
         if (!credentials) {
           throw new Error("Faltan credenciales");
         }
-        const { email, codigo_empleado } = credentials;
 
-        const user = await prisma.usuarios_ecommerce.findUnique({
-          where: { codigo_empleado },
-          select: { id: true, nombre: true, correo: true, estado: true, rol: true },
+        const { cedula, codigo_empleado } = credentials;
+
+        // ✅ Buscar usuario por cédula y código de empleado
+        const user = await prisma.usuarios_ecommerce.findFirst({
+          where: { cedula, codigo_empleado },
+          select: { id: true, nombre: true, rol: true, estado: true },
         });
 
-        if (!user || user.estado !== "Activo" || user.correo.toLowerCase() !== email.toLowerCase()) {
+        // 🚨 Verificar si el usuario existe y está activo
+        if (!user || user.estado !== "Activo") {
           console.log("❌ Usuario no válido");
           return null;
         }
 
         return {
           id: user.id.toString(),
-          codigo_empleado,
           name: user.nombre,
-          email: user.correo,
+          cedula,
+          codigo_empleado,
           rol: user.rol,
         };
       },

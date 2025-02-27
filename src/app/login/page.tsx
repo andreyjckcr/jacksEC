@@ -1,23 +1,22 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
-import { signIn } from "next-auth/react"
-import toast from "react-hot-toast"
-import Link from "next/link"
-import { Button } from "../../../components/ui/button"
-import { Input } from "../../../components/ui/input"
-import Image from "next/image"
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { signIn } from "next-auth/react";
+import toast from "react-hot-toast";
+import { Button } from "../../../components/ui/button";
+import { Input } from "../../../components/ui/input";
+import Image from "next/image";
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("");
+  const [cedula, setCedula] = useState("");
   const [codigoEmpleado, setCodigoEmpleado] = useState("");
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const result = await signIn("credentials", {
-      email,
+      cedula,
       codigo_empleado: codigoEmpleado,
       redirect: false,
     });
@@ -27,7 +26,7 @@ export default function LoginPage() {
       const res = await fetch("/api/auth/session");
       const session = await res.json();
 
-      console.log("🔍 Sesión obtenida:", session); // 👀 Revisar si el rol está presente
+      console.log("🔍 Sesión obtenida:", session); // 👀 Verifica si el rol se obtiene correctamente
 
       if (session.user?.rol === "administrador") {
         router.push("/admin"); // 🚀 Redirigir a la página de administrador
@@ -57,7 +56,7 @@ export default function LoginPage() {
           />
         </div>
         <h2 className="text-xl md:text-2xl font-semibold text-gray-800 text-center">
-          App Jack&apos;s - Compra desde donde tu quieras
+          App Jack&apos;s - Compra desde donde tú quieras
         </h2>
       </div>
 
@@ -65,10 +64,10 @@ export default function LoginPage() {
         <div className="w-full max-w-[320px] space-y-4">
           <form onSubmit={handleSubmit} className="space-y-4">
             <Input
-              type="email"
-              placeholder="Correo Electrónico"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              type="text"
+              placeholder="Cédula"
+              value={cedula}
+              onChange={(e) => setCedula(e.target.value)}
               required
               className="h-12"
             />
@@ -84,17 +83,8 @@ export default function LoginPage() {
               Iniciar Sesión
             </Button>
           </form>
-          <div className="mt-4 text-center">
-            <p className="text-sm text-gray-600">
-              ¿No tienes cuenta?{" "}
-              <Link href="/register" className="text-blue-600 hover:underline">
-                Crear cuenta
-              </Link>
-            </p>
-          </div>
         </div>
       </div>
     </div>
-  )
+  );
 }
-
