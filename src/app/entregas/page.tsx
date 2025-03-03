@@ -41,7 +41,7 @@ export default function EntregasPage() {
   useEffect(() => {
     if (status === "authenticated") {
       const userRole = session?.user?.rol;
-      if (userRole === "admin" || userRole === "despachante") {
+      if (userRole === "administrador" || userRole === "despachante") {
         setIsAllowed(true);
       } else {
         toast.error("No tienes permisos para acceder a esta página.");
