@@ -5,6 +5,13 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "../../../../lib/authOptions";
 import { prisma } from "../../../../lib/prisma";
 import { Buffer } from "buffer";
+import { toZonedTime } from "date-fns-tz";
+import { addDays, startOfDay } from "date-fns";
+
+{/* const today = new Date();
+while (today.getUTCDay() !== 3) {
+  today.setUTCDate(today.getUTCDate() + 1);
+} // 💡 Fuerza que sea miércoles sin cambiar la fecha del sistema */}
 
 export const runtime = "nodejs";
 
@@ -29,13 +36,49 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Usuario no encontrado" }, { status: 404 });
     }
 
-    const startOfWeek = new Date();
-    startOfWeek.setDate(startOfWeek.getDate() - 7);
+    // 📌 Obtener la fecha y hora en Costa Rica (UTC-6)
+    const timeZone = "America/Costa_Rica";
+    const ahoraUTC = new Date();
+    const ahora = toZonedTime(ahoraUTC, timeZone);
+    const diaSemana = ahora.getDay(); // 0 = Domingo, 1 = Lunes, ..., 6 = Sábado
 
+    // 🚨 Restricción de días de compra (Solo Jueves a Martes)
+    if (diaSemana === 3) { // Miércoles (día 3)
+      return NextResponse.json(
+        { error: "Los miércoles no se pueden realizar compras. Día exclusivo de alisto." },
+        { status: 403 }
+      );
+    }
+
+    // 📌 Calcular inicio de la semana (Jueves a Martes)
+    let inicioSemana = startOfDay(ahora);
+    if (diaSemana >= 4) { // Si es Jueves (4) o más, el inicio de semana es el Jueves actual
+      inicioSemana = startOfDay(addDays(ahora, - (diaSemana - 4)));
+    } else { // Si es Domingo (0) a Martes (2), el inicio de semana es el Jueves pasado
+      inicioSemana = startOfDay(addDays(ahora, - (diaSemana + 3)));
+    }
+
+    // 🚨 Verificar si el usuario ya tiene un pedido en estado "Pedido Realizado" o "Pedido en proceso"
+    const pedidosPendientes = await prisma.historial_compras_ec.findFirst({
+      where: {
+        id_usuario: userId,
+        estado: { in: ["Pedido realizado", "Pedido en proceso"] },
+        fecha_hora: { gte: inicioSemana },
+      },
+    });
+
+    if (pedidosPendientes) {
+      return NextResponse.json(
+        { error: "Ya tienes una compra en proceso. Debes esperar a que se complete antes de hacer otra." },
+        { status: 403 }
+      );
+    }
+
+    // 📌 Verificar límite de ₡12,000 en la semana
     const totalGastado = await prisma.historial_compras_ec.aggregate({
       where: {
         id_usuario: userId,
-        fecha_hora: { gte: startOfWeek },
+        fecha_hora: { gte: inicioSemana },
         estado: { in: ["Pedido realizado", "Pedido en proceso"] },
       },
       _sum: { total: true },
@@ -53,6 +96,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // ✅ Generar PDF de factura
     const pdfBase64 = await generateInvoicePDF(
       transaction_id,
       cartItems,
@@ -61,16 +105,17 @@ export async function POST(req: NextRequest) {
       userId,
       userAgent,
       "Online",
-      new Date()
+      ahora
     );
 
     const pdfBuffer = Buffer.from(pdfBase64.replace(/^data:application\/pdf;base64,/, ""), "base64");
 
+    // 📌 Registrar nueva compra
     const nuevaCompra = await prisma.historial_compras_ec.create({
       data: {
         id_usuario: userId,
         transaction_id,
-        fecha_hora: new Date(),
+        fecha_hora: ahora,
         device: userAgent,
         location: "Online",
         total,
@@ -78,7 +123,7 @@ export async function POST(req: NextRequest) {
         metodo_pago: "Deducción de Planilla",
         invoice: transaction_id,
       },
-    });    
+    });
 
     await Promise.all(
       cartItems.map(async (item: { id_producto: number; cantidad: number }) => {
@@ -92,18 +137,18 @@ export async function POST(req: NextRequest) {
       })
     );
 
-    // Insertar en facturacion_ec
+    // 📌 Registrar en facturación
     await prisma.facturacion_ec.create({
       data: {
         id_pedido: nuevaCompra.id,
         total,
         fecha: nuevaCompra.fecha_hora,
         estado: "Pedido realizado",
-        transaction_id: transaction_id, // Aquí cambio la asignación explícita
+        transaction_id,
       },
-    });      
+    });
 
-    // Vaciar carrito
+    // 🛒 Vaciar carrito
     await prisma.carrito_ec.deleteMany({ where: { id_usuario: userId } });
 
     // 📧 Enviar correo con el PDF adjunto
@@ -119,7 +164,6 @@ export async function POST(req: NextRequest) {
       console.error("❌ Error enviando correo:", error);
     }
 
-    // ✅ Al devolver el transaction_id, el frontend ya sabe cómo descargar el PDF automáticamente
     return NextResponse.json({ transaction_id }, { status: 200 });
   } catch (error) {
     console.error("❌ Error en /api/checkout:", error);
@@ -129,3 +173,4 @@ export async function POST(req: NextRequest) {
     );
   }
 }
+

@@ -24,6 +24,8 @@ export default function CheckoutPage() {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [bloqueoCompra, setBloqueoCompra] = useState(false);
+  const [bloqueoMotivo, setBloqueoMotivo] = useState("");
 
   // ✅ Obtener carrito desde la API
   useEffect(() => {
@@ -46,6 +48,25 @@ export default function CheckoutPage() {
     fetchCart();
   }, [session]);
 
+  // ✅ Validar restricciones de compra
+  useEffect(() => {
+    async function checkPurchaseRestrictions() {
+      try {
+        const response = await fetch("/api/checkout/restrictions");
+        const result = await response.json();
+
+        if (!response.ok) {
+          setBloqueoCompra(true);
+          setBloqueoMotivo(result.error || "No puedes realizar la compra en este momento.");
+        }
+      } catch (error) {
+        console.error("❌ Error al verificar restricciones de compra:", error);
+      }
+    }
+
+    checkPurchaseRestrictions();
+  }, []);
+
   const getTotalPrice = () => {
     return cartItems.reduce((acc, item) => acc + item.cantidad * (item.productos_ec.Precio || 0), 0);
   };
@@ -61,27 +82,27 @@ export default function CheckoutPage() {
           total: getTotalPrice(),
         }),
       });
-  
+
       const result = await response.json();
-  
+
       if (!response.ok) {
         throw new Error(result.error || "No se pudo procesar la compra");
       }
-  
+
       const { transaction_id } = result;
-  
+
       // 🔽 Descargar usando el transaction_id generado
       const downloadUrl = `/api/invoices/${transaction_id}`;
-  
+
       const link = document.createElement("a");
       link.href = downloadUrl;
       link.download = `Factura_${transaction_id}.pdf`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-  
+
       toast.success("Compra realizada con éxito ✅", { duration: 3000, position: "top-center" });
-  
+
       // 🔹 Limpiar carrito y redirigir
       setCartItems([]);
       router.push("/checkout/success");
@@ -90,7 +111,7 @@ export default function CheckoutPage() {
       toast.error(errorMessage);
       setIsProcessing(false);
     }
-  };  
+  };
 
   const handleGoBack = () => {
     router.back();
@@ -105,6 +126,11 @@ export default function CheckoutPage() {
 
           {loading ? (
             <p className="text-center text-gray-600">Cargando carrito...</p>
+          ) : bloqueoCompra ? (
+            <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-6">
+              <p className="font-semibold">⚠️ No puedes comprar en este momento:</p>
+              <p>{bloqueoMotivo}</p>
+            </div>
           ) : cartItems.length === 0 ? (
             <p className="text-center text-red-600">Tu carrito está vacío.</p>
           ) : (
@@ -154,7 +180,7 @@ export default function CheckoutPage() {
 
               {/* 🔹 Botones de Acción */}
               <div className="flex justify-between">
-                {/* Botón de regresar con mejoras en diseño */}
+                {/* Botón de regresar */}
                 <Button
                   onClick={handleGoBack}
                   className="bg-gray-300 hover:bg-gray-400 text-black px-6 py-3 rounded-lg shadow-md transition-all"
@@ -163,12 +189,12 @@ export default function CheckoutPage() {
                   ← Regresar
                 </Button>
 
-                {/* Botón de confirmar compra en azul con efecto de carga */}
+                {/* Botón de confirmar compra */}
                 <Button
                   onClick={handleCheckout}
                   className="bg-gradient-to-br from-[#1B3668] via-[#1B3668] to-[#2a4d8f] text-white px-6 py-3 rounded-lg shadow-md transition-all hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
                   size="lg"
-                  disabled={isProcessing}
+                  disabled={isProcessing || bloqueoCompra}
                 >
                   {isProcessing ? "Procesando..." : "Confirmar Compra"}
                 </Button>
@@ -180,4 +206,3 @@ export default function CheckoutPage() {
     </div>
   );
 }
-

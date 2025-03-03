@@ -87,6 +87,11 @@ export default function LoginPage() {
     }
   };
 
+  const today = new Date();
+  if (today.getDay() === 3) {
+    router.push("/miercoles");
+  }
+
   return (
     <div className="min-h-screen flex flex-col">
       <div className="bg-[#e6f0ff] p-8 flex flex-col items-center justify-center">

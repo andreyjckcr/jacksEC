@@ -8,12 +8,13 @@ datasource db {
 }
 
 model detalle_pedido_ec {
-  id          Int      @id(map: "PK__detalle___3213E83F5103D370") @default(autoincrement())
+  id          Int        @id(map: "PK__detalle___3213E83F5103D370") @default(autoincrement())
   id_pedido   Int
-  id_producto String   @db.VarChar(20)
+  id_producto String     @db.VarChar(20)
   cantidad    Int
-  precio      Decimal  @db.Decimal(10, 2)
-  subtotal    Decimal? @db.Decimal(21, 2)
+  precio      Decimal    @db.Decimal(10, 2)
+  subtotal    Decimal?   @db.Decimal(21, 2)
+  pedidos_ec  pedidos_ec @relation(fields: [id_pedido], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_DetallePedido_Pedido")
 }
 
 model facturacion_ec {
@@ -27,16 +28,17 @@ model facturacion_ec {
 }
 
 model pedidos_ec {
-  id                 Int                @id(map: "PK_pedidos_ec") @default(autoincrement())
+  id                 Int                 @id(map: "PK_pedidos_ec") @default(autoincrement())
   id_usuario         Int
-  fecha              DateTime?          @default(now(), map: "DF__pedidos_e__fecha__33D4B598") @db.DateTime
-  estado             String             @db.VarChar(20)
+  fecha              DateTime?           @default(now(), map: "DF__pedidos_e__fecha__33D4B598") @db.DateTime
+  estado             String              @db.VarChar(20)
   id_factura         Int?
-  monto              Decimal?           @default(0, map: "DF__pedidos_e__monto__09A971A2") @db.Decimal(10, 2)
-  email_status       String?            @default("Sin notificar", map: "DF__pedidos_e__email__0A9D95DB") @db.VarChar(50)
-  productos          String?            @db.NVarChar(Max)
-  usuarios_ecommerce usuarios_ecommerce @relation(fields: [id_usuario], references: [id], onUpdate: NoAction, map: "FK__pedidos_e__id_us__35BCFE0A")
-  facturacion_ec     facturacion_ec?    @relation(fields: [id_factura], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_Pedidos_Facturacion")
+  monto              Decimal?            @default(0, map: "DF__pedidos_e__monto__09A971A2") @db.Decimal(10, 2)
+  email_status       String?             @default("Sin notificar", map: "DF__pedidos_e__email__0A9D95DB") @db.VarChar(50)
+  productos          String?             @db.NVarChar(Max)
+  detalle_pedido_ec  detalle_pedido_ec[]
+  usuarios_ecommerce usuarios_ecommerce  @relation(fields: [id_usuario], references: [id], onUpdate: NoAction, map: "FK__pedidos_e__id_us__35BCFE0A")
+  facturacion_ec     facturacion_ec?     @relation(fields: [id_factura], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_Pedidos_Facturacion")
 }
 
 model usuarios_ecommerce {
