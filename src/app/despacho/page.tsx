@@ -5,7 +5,7 @@ import { Input } from "../../../components/ui/input";
 import { Button } from "../../../components/ui/button";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
-import { signOut as nextAuthSignOut } from "next-auth/react";
+import { signOut as nextAuthSignOut, useSession } from "next-auth/react";
 
 interface CustomerData {
   nombre: string;
@@ -39,6 +39,7 @@ export default function DespachoPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [pedido, setPedido] = useState<CartItem[]>([]);
   const router = useRouter();
+  const { data: session } = useSession();
 
   const LIMITE_SEMANAL = 12000;
 
@@ -234,7 +235,16 @@ export default function DespachoPage() {
             className="bg-gradient-to-br from-[#1B3668] via-[#1B3668] to-[#2a4d8f] text-white rounded-md"
           >
             Ir a Portal de Gestión de Ventas
-          </Button> 
+          </Button>
+
+          {session?.user?.rol === "administrador" && (
+            <Button
+              onClick={() => router.push("/admin")}
+              className="bg-gradient-to-br from-[#1B3668] via-[#1B3668] to-[#2a4d8f] text-white rounded-md"
+            >
+              Ir al portal de Administrador
+            </Button>
+          )}
         </div>
       </div>
   

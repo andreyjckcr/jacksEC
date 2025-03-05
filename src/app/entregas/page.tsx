@@ -165,12 +165,22 @@ export default function EntregasPage() {
       <main className="container mx-auto px-4 py-8">
         <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold mb-6">Gestión de Entregas</h1>
-        <Button
-          onClick={() => router.push("/despacho")}
-          className="bg-gray-300 hover:bg-gray-400 text-black px-4 py-2 rounded-lg"
-        >
-          Regresar a Despacho de Productos
-        </Button>
+          <div className="flex items-center gap-4">
+          {session?.user?.rol === "administrador" && (
+              <Button
+                onClick={() => router.push("/admin")}
+                className="bg-gradient-to-br from-[#1B3668] via-[#1B3668] to-[#2a4d8f] text-white rounded-md"
+              >
+                Ir al portal de Administrador
+              </Button>
+            )}
+          <Button
+            onClick={() => router.push("/despacho")}
+            className="bg-gray-300 hover:bg-gray-400 text-black px-4 py-2 rounded-lg"
+          >
+            Regresar a Despacho de Productos
+          </Button>
+        </div>
       </div>
 
         <div className="flex justify-between items-center mb-4">

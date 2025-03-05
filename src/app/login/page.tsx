@@ -91,6 +91,21 @@ export default function LoginPage() {
         }
       }
 
+      // Para los roles especiales, redirigir siempre a sus rutas
+      if (session.user?.rol === "administrador") {
+        router.push("/admin");
+      } else if (session.user?.rol === "despachante") {
+        router.push("/despacho");
+      } else {
+        // Para los demás usuarios, si es miércoles redirigir a /miercoles, de lo contrario a /dashboard
+        const today = new Date().getUTCDay();
+        if (today === 3) {
+          router.push("/miercoles");
+        } else {
+          router.push("/dashboard");
+        }
+      }
+
       toast.success("Inicio de sesión exitoso");
     } else {
       setIntentosRestantes((prev) => prev - 1);
