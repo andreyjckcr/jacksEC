@@ -1,20 +1,24 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { signIn } from "next-auth/react";
+import { useSession } from "next-auth/react";
 import toast from "react-hot-toast";
 import { Button } from "../../../components/ui/button";
 import { Input } from "../../../components/ui/input";
 import Image from "next/image";
 
 export default function LoginPage() {
+  const { data: session, status } = useSession();
+  const router = useRouter();
+  const pathname = usePathname();
+
   const [cedula, setCedula] = useState("");
   const [codigoEmpleado, setCodigoEmpleado] = useState("");
   const [intentosRestantes, setIntentosRestantes] = useState(5);
   const [bloqueadoHasta, setBloqueadoHasta] = useState<number | null>(null);
   const [tiempoRestante, setTiempoRestante] = useState(0);
-  const router = useRouter();
 
   useEffect(() => {
     const storedBloqueo = localStorage.getItem("bloqueadoHasta");
@@ -46,6 +50,14 @@ export default function LoginPage() {
     }
   }, [bloqueadoHasta]);
 
+  // 🔒 Bloquear navegación manual a otras rutas los miércoles
+  useEffect(() => {
+    const today = new Date().getUTCDay();
+    if (today === 3 && session && pathname !== "/miercoles") {
+      router.push("/miercoles");
+    }
+  }, [session, pathname, router]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (bloqueadoHasta) {
@@ -65,7 +77,7 @@ export default function LoginPage() {
 
       console.log("🔍 Sesión obtenida:", session);
 
-      // ✅ Verificar si es miércoles después de iniciar sesión
+      // ✅ Si es miércoles, redirigir a la pantalla especial
       const today = new Date().getUTCDay();
       if (today === 3) {
         router.push("/miercoles");
