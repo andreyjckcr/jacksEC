@@ -65,12 +65,18 @@ export default function LoginPage() {
 
       console.log("🔍 Sesión obtenida:", session);
 
-      if (session.user?.rol === "administrador") {
-        router.push("/admin");
-      } else if (session.user?.rol === "despachante") {
-        router.push("/despacho");
+      // ✅ Verificar si es miércoles después de iniciar sesión
+      const today = new Date().getUTCDay();
+      if (today === 3) {
+        router.push("/miercoles");
       } else {
-        router.push("/dashboard");
+        if (session.user?.rol === "administrador") {
+          router.push("/admin");
+        } else if (session.user?.rol === "despachante") {
+          router.push("/despacho");
+        } else {
+          router.push("/dashboard");
+        }
       }
 
       toast.success("Inicio de sesión exitoso");
@@ -86,11 +92,6 @@ export default function LoginPage() {
       }
     }
   };
-
-  const today = new Date();
-  if (today.getDay() === 3) {
-    router.push("/miercoles");
-  }
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -134,7 +135,10 @@ export default function LoginPage() {
                 required
                 className="h-12"
               />
-              <Button type="submit" className="w-full bg-black text-white hover:bg-gray-800 h-12 text-base font-normal">
+              <Button
+                type="submit"
+                className="w-full bg-gradient-to-br from-[#1B3668] via-[#1B3668] to-[#2a4d8f] text-white hover:opacity-90 h-12 text-base font-normal"
+              >
                 Iniciar Sesión
               </Button>
             </form>
