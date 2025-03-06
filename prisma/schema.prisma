@@ -125,3 +125,13 @@ model validacion_empleados {
   Nombre              String @db.VarChar(100)
   NIF                 String @unique(map: "UQ__validaci__C7DEC330756CA4EF") @db.VarChar(20)
 }
+
+model Producto {
+  codigo_empleado String   @db.Char(20)
+  codigo_articulo String   @db.Char(6)
+  fecha           DateTime @db.DateTime
+  estado          Int      @db.TinyInt
+  cantidad        Int      @default(1, map: "DF__Producto__cantid__114A936A")
+
+  @@id([codigo_empleado, codigo_articulo, fecha], map: "PK_Producto")
+}

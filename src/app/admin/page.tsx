@@ -4,11 +4,14 @@ import { useEffect, useState } from "react";
 import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { Button } from "../../../components/ui/button";
+import ExportarDatosComponent from "../export-data/page";
+
+
 
 export default function AdminPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
-  const [activeSection, setActiveSection] = useState<"inicio" | "agregarUsuario" | "administrarUsuarios">("inicio");
+  const [activeSection, setActiveSection] = useState<"inicio" | "agregarUsuario" | "administrarUsuarios" | "exportarDatos">("inicio");
 
   useEffect(() => {
     if (status === "loading") return;
@@ -35,15 +38,18 @@ export default function AdminPage() {
 
       {/* Menú de opciones */}
       <div className="flex space-x-4 mb-6">
-        {["inicio", "agregarUsuario", "administrarUsuarios"].map((section) => (
+        {["inicio", "agregarUsuario", "administrarUsuarios", "exportarDatos"].map((section) => (
           <Button
             key={section}
             onClick={() => setActiveSection(section as typeof activeSection)}
-            className={`px-4 py-2 rounded-md ${
-              activeSection === section ? "bg-gradient-to-br from-[#1B3668] via-[#1B3668] to-[#2a4d8f] text-white" : "bg-gray-300 text-gray-800"
-            }`}
           >
-            {section === "inicio" ? "Inicio" : section === "agregarUsuario" ? "Agregar Usuario" : "Administrar Usuarios"}
+            {section === "inicio" 
+              ? "Inicio" 
+              : section === "agregarUsuario" 
+                ? "Agregar Usuario" 
+                : section === "administrarUsuarios" 
+                  ? "Administrar Usuarios"
+                  : "Exportar Datos"}
           </Button>
         ))}
       </div>
@@ -63,6 +69,7 @@ export default function AdminPage() {
         )}
         {activeSection === "agregarUsuario" && <AgregarUsuario />}
         {activeSection === "administrarUsuarios" && <AdministrarUsuarios />}
+        {activeSection === "exportarDatos" && <ExportarDatosComponent />}
       </div>
     </div>
   );
@@ -212,3 +219,14 @@ function AdministrarUsuarios() {
     </div>
   );
 }
+
+function ExportarDatos() {
+  return (
+    <div>
+      <h2 className="text-xl font-semibold mb-4">Exportar Datos</h2>
+      <p>Aquí podrás exportar información de la aplicación.</p>
+      {/* Agrega la lógica o formularios que necesites para la exportación */}
+    </div>
+  );
+}
+
