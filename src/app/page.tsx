@@ -27,12 +27,12 @@ export default function Home() {
         <div className="w-full max-w-[320px] flex flex-col gap-4">
           <p className="text-x2 md:text-1xl font-semibold text-gray-800 text-center">Si eres empleado JACK´S, inicia sesión aquí para comprar nuestros productos</p>
           <Link href="/login" className="block">
-            <Button
-              className="w-full bg-black text-white hover:bg-gray-800 h-12 text-base font-normal"
-              variant="default"
-            >
-              Iniciar Sesión
-            </Button>
+          <Button
+            className="w-full bg-gradient-to-br from-[#1B3668] via-[#1B3668] to-[#2a4d8f] text-white hover:opacity-90 h-12 text-base font-normal"
+            variant="default"
+          >
+            Iniciar Sesión
+          </Button>
           </Link>
          {/*<Link href="/register" className="block">
             <Button
