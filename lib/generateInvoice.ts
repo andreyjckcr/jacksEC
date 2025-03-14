@@ -96,16 +96,16 @@ export async function generateInvoicePDF(
     });
 
     // 📌 SUBTOTAL, IMPUESTO Y TOTAL
-    const impuesto = total * 0.13; // Suponiendo un IVA del 13%
-    const subtotal = total - impuesto;
+    //const impuesto = total * 0.13; // Suponiendo un IVA del 13%
+    //const subtotal = total - impuesto;
 
-    yOffset -= 15;
-    page.drawText(`SubTotal`, { x: 150, y: yOffset, size: 10, font });
-    page.drawText(`CRC${subtotal.toFixed(2)}`, { x: 220, y: yOffset, size: 10, font });
+    //yOffset -= 15;
+   // page.drawText(`SubTotal`, { x: 150, y: yOffset, size: 10, font });
+    //page.drawText(`CRC${subtotal.toFixed(2)}`, { x: 220, y: yOffset, size: 10, font });
 
-    yOffset -= 15;
-    page.drawText(`Impuesto`, { x: 150, y: yOffset, size: 10, font });
-    page.drawText(`CRC${impuesto.toFixed(2)}`, { x: 220, y: yOffset, size: 10, font });
+    //yOffset -= 15;
+    //page.drawText(`Impuesto`, { x: 150, y: yOffset, size: 10, font });
+    //page.drawText(`CRC${impuesto.toFixed(2)}`, { x: 220, y: yOffset, size: 10, font });
 
     yOffset -= 15;
     page.drawText(`Total`, { x: 150, y: yOffset, size: 10, font: fontBold });
