@@ -57,11 +57,46 @@ export default function ProfilePage() {
     fetchProfile();
   }, []);  
 
+  const handleCancelPedido = async (transactionId: string) => {
+    if (!window.confirm("¿Estás seguro de que deseas cancelar este pedido? Esta acción no se puede deshacer.")) {
+      return;
+    }
+  
+    try {
+      const response = await fetch("/api/pedidos/cancelar", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ transactionId }),
+      });
+  
+      const data = await response.json();
+      if (response.ok) {
+        toast.success("Pedido cancelado con éxito.");
+        
+        // ✅ Actualizar el estado en la UI para reflejar que está cancelado
+        setPurchaseHistory((prevHistory) =>
+          prevHistory.map((purchase) =>
+            purchase.transaction_id === transactionId
+              ? { ...purchase, estado: "Cancelado" }
+              : purchase
+          )
+        );
+      } else {
+        toast.error(data.error || "No se pudo cancelar el pedido.");
+      }
+    } catch (error) {
+      toast.error("Error al cancelar el pedido.");
+    }
+  };
+
   function handleLogout() {
     signOut({ redirect: false }).then(() => {
       router.push("/login");
     });
   }
+  
 
   if (loading) {
     return <p className="text-center text-gray-600">Cargando perfil...</p>;
@@ -123,59 +158,95 @@ export default function ProfilePage() {
         </section>
 
         {/* 🔹 Historial de Compras */}
-        <section className="bg-white rounded-lg shadow p-6 mb-6">
-          <h2 className="text-xl font-semibold mb-4">Historial de Compras</h2>
-          {purchaseHistory.length === 0 ? (
-            <p className="text-gray-500">No hay compras registradas.</p>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="min-w-full bg-white border border-gray-200 shadow-md rounded-lg">
-                <thead className="bg-gray-100">
-                  <tr>
-                    <th className="px-4 py-2 text-center">ID Transacción</th>
-                    <th className="px-4 py-2 text-center">Productos</th>
-                    <th className="px-4 py-2 text-center">Fecha</th>
-                    <th className="px-4 py-2 text-center">Total</th>
-                    <th className="px-4 py-2 text-center">Descargar</th>
-                  </tr>
-                </thead>
-                <tbody>
-                    {purchaseHistory.map((purchase) => (
-                      <tr key={purchase.transaction_id} className="border-t">
-                        <td className="px-4 py-2 text-center">{purchase.transaction_id}</td>
+<section className="bg-white rounded-lg shadow p-6 mb-6">
+  <h2 className="text-xl font-semibold mb-4">Historial de Compras</h2>
+  {purchaseHistory.length === 0 ? (
+    <p className="text-gray-500">No hay compras registradas.</p>
+  ) : (
+    <div className="overflow-x-auto">
+      <table className="min-w-full bg-white border border-gray-200 shadow-md rounded-lg">
+        <thead className="bg-gray-100">
+          <tr>
+            <th className="px-4 py-2 text-center">ID Transacción</th>
+            <th className="px-4 py-2 text-center">Productos</th>
+            <th className="px-4 py-2 text-center">Fecha</th>
+            <th className="px-4 py-2 text-center">Total</th>
+            <th className="px-4 py-2 text-center">Descargar</th>
+            <th className="px-4 py-2 text-center">Cancelar</th> {/* 🔹 Nueva columna */}
+          </tr>
+        </thead>
+        <tbody>
+          {purchaseHistory.map((purchase) => {
+            const fechaPedido = new Date(purchase.fecha_hora);
+            const hoy = new Date();
+            const diaSemanaHoy = hoy.getDay(); // 0 = Domingo, 1 = Lunes, ..., 4 = Jueves
+            let ultimoJueves = new Date();
 
-                        {/* ✅ Nueva Columna: Lista de Productos Comprados */}
-                        <td className="px-4 py-2 text-center">
-                        {purchase.productos && purchase.productos.length > 0 ? (
-                          <ul>
-                            {purchase.productos.map((p, index) => (
-                              <li key={index}>{p.nombre} (x{p.cantidad})</li>
-                            ))}
-                          </ul>
-                        ) : (
-                          <p className="text-red-500">⚠️ No hay productos</p> // 🔍 Mensaje de depuración visual
-                        )}
+            if (diaSemanaHoy >= 4) {
+              // Si hoy es jueves o después, buscamos el jueves de esta semana
+              ultimoJueves.setDate(hoy.getDate() - (diaSemanaHoy - 4));
+            } else {
+              // Si hoy es antes del jueves, buscamos el jueves de la semana pasada
+              ultimoJueves.setDate(hoy.getDate() - (diaSemanaHoy + 3));
+            }
+            ultimoJueves.setHours(0, 0, 0, 0); // Asegurar que sea el inicio del día
+
+            const esDeLaSemanaActual = fechaPedido >= ultimoJueves;
+            const puedeCancelar = esDeLaSemanaActual && purchase.estado !== "Entregado";
+
+            return (
+              <tr key={purchase.transaction_id} className="border-t">
+                <td className="px-4 py-2 text-center">{purchase.transaction_id}</td>
+                <td className="px-4 py-2 text-center">
+                  {purchase.productos && purchase.productos.length > 0 ? (
+                    <ul>
+                      {purchase.productos.map((p, index) => (
+                        <li key={index}>{p.nombre} (x{p.cantidad})</li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="text-red-500">⚠️ No hay productos</p>
+                  )}
+                </td>
+                <td className="px-4 py-2 text-center">{fechaPedido.toLocaleString()}</td>
+                <td className="px-4 py-2 text-center">₡{purchase.total.toLocaleString()}</td>
+
+                {/* ✅ Botón de Descargar Factura */}
+                <td className="px-4 py-2 text-center">
+                  <button
+                    onClick={() => downloadInvoice(purchase.transaction_id)}
+                    className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition"
+                  >
+                    Descargar PDF
+                  </button>
+                </td>
+
+                {/* 🔹 Botón de Cancelar Pedido */}
+                <td className="px-4 py-2 text-center">
+                {purchase.estado === "Cancelado" ? (
+                <span className="px-4 py-2 bg-gray-400 text-white rounded-lg">
+                Cancelado
+                </span>
+               ) : (
+                  <button
+                onClick={() => handleCancelPedido(purchase.transaction_id)}
+                className={`px-4 py-2 rounded-lg transition ${
+                   puedeCancelar ? "bg-red-600 text-white hover:bg-red-700" : "bg-gray-400 text-gray-700 cursor-not-allowed"
+                    }`}
+                       disabled={!puedeCancelar}
+                         >
+                           Cancelar
+                            </button>
+                       )}
                       </td>
-
-                        <td className="px-4 py-2 text-center">{new Date(purchase.fecha_hora).toLocaleString()}</td>
-                        <td className="px-4 py-2 text-center">₡{purchase.total.toLocaleString()}</td>
-
-                        {/* ✅ Botón de Descargar Factura */}
-                        <td className="px-4 py-2 text-center">
-                        <button
-                            onClick={() => downloadInvoice(purchase.transaction_id)}
-                            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition"
-                          >
-                            Descargar PDF
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-              </table>
-            </div>
-          )}
-        </section>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  )}
+</section>
       </main>
     </div>
   );
