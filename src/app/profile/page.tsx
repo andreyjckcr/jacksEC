@@ -96,7 +96,7 @@ export default function ProfilePage() {
       router.push("/login");
     });
   }
-  
+
 
   if (loading) {
     return <p className="text-center text-gray-600">Cargando perfil...</p>;
@@ -172,7 +172,7 @@ export default function ProfilePage() {
             <th className="px-4 py-2 text-center">Fecha</th>
             <th className="px-4 py-2 text-center">Total</th>
             <th className="px-4 py-2 text-center">Descargar</th>
-            <th className="px-4 py-2 text-center">Cancelar</th> {/* 🔹 Nueva columna */}
+            <th className="px-4 py-2 text-center">Estado del Pedido</th>
           </tr>
         </thead>
         <tbody>
@@ -219,13 +219,11 @@ export default function ProfilePage() {
                   >
                     Descargar PDF
                   </button>
-                </td>
-
-                {/* 🔹 Botón de Cancelar Pedido */}
+                </td>               
                 <td className="px-4 py-2 text-center">
-                {purchase.estado === "Cancelado" ? (
+                {purchase.estado === "Cancelado" || purchase.estado === "Entregado" ? (
                 <span className="px-4 py-2 bg-gray-400 text-white rounded-lg">
-                Cancelado
+                {purchase.estado}
                 </span>
                ) : (
                   <button
