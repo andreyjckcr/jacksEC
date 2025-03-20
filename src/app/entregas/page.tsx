@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import toast from "react-hot-toast";
 import { useSession } from "next-auth/react";
 
-type OrderStatus = "Pedido realizado" | "Pedido en proceso" | "Listo para entrega" | "Entregado";
+type OrderStatus = "Pedido realizado" | "Pedido en proceso" | "Listo para entrega" | "Entregado" | "Cancelado";
 
 interface Pedido {
   id: number;
@@ -158,6 +158,37 @@ export default function EntregasPage() {
     }
   };  
 
+  const handleCancelPedido = async (pedidoId: number) => {
+    setLoadingPedidoId(pedidoId);
+  
+    try {
+      const response = await fetch(`/api/pedidos/cancelar`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ pedidoId }),
+      });
+  
+      const data = await response.json();
+      if (response.ok) {
+        toast.success("Pedido cancelado con éxito.");
+        setPedidos((prevPedidos) =>
+          prevPedidos.map((pedido) =>
+            pedido.id === pedidoId ? { ...pedido, estado: "Cancelado" } : pedido
+          )
+        );
+      } else {
+        toast.error(data.error || "No se pudo cancelar el pedido.");
+      }
+    } catch (error) {
+      toast.error("Error al cancelar el pedido.");
+    } finally {
+      setLoadingPedidoId(null);
+    }
+  };
+
+
   const pedidosFiltrados = pedidos.filter((pedido) => pedido.estado === activeTab);
 
   return (
@@ -240,7 +271,7 @@ export default function EntregasPage() {
         </div>
 
         <div className="flex flex-wrap gap-2 mb-6">
-          {["Pedido realizado", "Pedido en proceso", "Listo para entrega", "Entregado"].map((status) => (
+          {["Pedido realizado", "Pedido en proceso", "Listo para entrega", "Entregado","Cancelado"].map((status) => (
             <Button
               key={status}
               onClick={() => setActiveTab(status as OrderStatus)}
@@ -265,6 +296,7 @@ export default function EntregasPage() {
               <TableHead>Estado</TableHead>
               <TableHead>Monto</TableHead>
               <TableHead>ID Transacción</TableHead>
+              <TableHead>Cancelar</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -284,7 +316,7 @@ export default function EntregasPage() {
                       <SelectValue placeholder="Cambiar estado" />
                     </SelectTrigger>
                     <SelectContent className="bg-white border border-gray-300 rounded-lg shadow-md w-[240px]">
-                      {["Pedido realizado", "Pedido en proceso", "Listo para entrega", "Entregado"].map((estado) => (
+                      {["Pedido realizado", "Pedido en proceso", "Listo para entrega", "Entregado",].map((estado) => (
                         <SelectItem
                           key={estado}
                           value={estado}
@@ -306,6 +338,17 @@ export default function EntregasPage() {
                 </TableCell>
                 <TableCell>₡{pedido.monto ? Number(pedido.monto).toFixed(2) : "0.00"}</TableCell>
                 <TableCell>{pedido.transaction_id}</TableCell>
+                <TableCell>
+        {pedido.estado !== "Entregado" && (
+          <Button 
+            onClick={() => handleCancelPedido(pedido.id)}
+            variant="destructive" // Estilo de botón rojo
+            disabled={loadingPedidoId === pedido.id} 
+          >
+            {loadingPedidoId === pedido.id ? "Cancelando..." : "Cancelar"}
+          </Button>
+        )}
+      </TableCell>
               </TableRow>
             ))}
           </TableBody>
