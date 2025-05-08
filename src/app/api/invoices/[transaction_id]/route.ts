@@ -40,8 +40,7 @@ export async function GET(
       compra.id_usuario,
       compra.device || "Desconocido",
       compra.location || "Desconocido",
-      compra.fecha_hora ?? new Date(),
-      compra.usuarios_ecommerce.codigo_empleado
+      compra.fecha_hora ?? new Date()
     );
 
     const pdfBuffer = Buffer.from(pdfBase64.replace(/^data:application\/pdf;base64,/, ""), "base64");

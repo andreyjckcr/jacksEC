@@ -9,8 +9,7 @@ export async function generateInvoicePDF(
   userName: string,
   userId: number,
   userAgent: string | undefined,
-  location: string,
-  employeeCode: string
+  location: string
 ) {
   const pdfDoc = await PDFDocument.create();
   pdfDoc.registerFontkit(fontkit);

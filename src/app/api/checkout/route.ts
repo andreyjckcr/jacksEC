@@ -8,10 +8,10 @@ import { Buffer } from "buffer";
 import { toZonedTime } from "date-fns-tz";
 import { addDays, startOfDay } from "date-fns";
 
- const today = new Date();
+{/* const today = new Date();
 while (today.getUTCDay() !== 3) {
   today.setUTCDate(today.getUTCDate() + 1);
-} // 💡 Fuerza que sea miércoles sin cambiar la fecha del sistema 
+} // 💡 Fuerza que sea miércoles sin cambiar la fecha del sistema */}
 
 export const runtime = "nodejs";
 
@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
 
     const user = await prisma.usuarios_ecommerce.findUnique({
       where: { id: userId },
-      select: { nombre: true, correo: true, codigo_empleado: true },
+      select: { nombre: true, correo: true },
     });
 
     if (!user) {
@@ -105,8 +105,7 @@ export async function POST(req: NextRequest) {
       userId,
       userAgent,
       "Online",
-      ahora, 
-      user.codigo_empleado
+      ahora
     );
 
     const pdfBuffer = Buffer.from(pdfBase64.replace(/^data:application\/pdf;base64,/, ""), "base64");

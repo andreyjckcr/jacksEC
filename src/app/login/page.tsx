@@ -10,7 +10,7 @@ import { Input } from "../../../components/ui/input";
 import Image from "next/image";
 
 export default function LoginPage() {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const router = useRouter();
   const pathname = usePathname();
 
@@ -20,7 +20,6 @@ export default function LoginPage() {
   const [bloqueadoHasta, setBloqueadoHasta] = useState<number | null>(null);
   const [tiempoRestante, setTiempoRestante] = useState(0);
 
-  // Validar bloqueo persistente
   useEffect(() => {
     const storedBloqueo = localStorage.getItem("bloqueadoHasta");
     if (storedBloqueo) {
@@ -34,7 +33,6 @@ export default function LoginPage() {
     }
   }, []);
 
-  // Contador regresivo del bloqueo
   useEffect(() => {
     if (bloqueadoHasta) {
       const interval = setInterval(() => {
@@ -52,20 +50,16 @@ export default function LoginPage() {
     }
   }, [bloqueadoHasta]);
 
-
-
-
-  // 🔒 Redirigir a /miercoles si ya hay sesión y es miércoles
+  // 🔒 Bloquear navegación manual a otras rutas los miércoles
   useEffect(() => {
-    const today: number =1; // ✅ hora local
-    if (today === 2 && session && pathname !== "/miercoles") {
+    const today = new Date().getUTCDay();
+    if (today === 3 && session && pathname !== "/miercoles") {
       router.push("/miercoles");
     }
   }, [session, pathname, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
     if (bloqueadoHasta) {
       toast.error(`Cuenta bloqueada. Espera ${tiempoRestante} segundos.`);
       return;
@@ -83,25 +77,40 @@ export default function LoginPage() {
 
       console.log("🔍 Sesión obtenida:", session);
 
-      const today = new Date().getDay(); // ✅ hora local
-      const hora = new Date().getHours(); // ✅ hora local
+      // ✅ Si es miércoles, redirigir a la pantalla especial
+      const today = new Date().getUTCDay();
+      if (today === 3) {
+        router.push("/miercoles");
+      } else {
+        if (session.user?.rol === "administrador") {
+          router.push("/admin");
+        } else if (session.user?.rol === "despachante") {
+          router.push("/despacho");
+        } else {
+          router.push("/dashboard");
+        }
+      }
 
-      // Redirección según rol y día
+      // Para los roles especiales, redirigir siempre a sus rutas
       if (session.user?.rol === "administrador") {
         router.push("/admin");
       } else if (session.user?.rol === "despachante") {
         router.push("/despacho");
-      } else if (today === 3 || (today === 2 && hora >= 23)) {
-        router.push("/miercoles");
       } else {
-        router.push("/dashboard");
+        // Para los demás usuarios, si es miércoles redirigir a /miercoles, de lo contrario a /dashboard
+        const today = new Date().getUTCDay();
+        if (today === 3) {
+          router.push("/miercoles");
+        } else {
+          router.push("/dashboard");
+        }
       }
 
       toast.success("Inicio de sesión exitoso");
     } else {
       setIntentosRestantes((prev) => prev - 1);
       if (intentosRestantes - 1 <= 0) {
-        const bloqueoTime = Date.now() + 2 * 60 * 1000;
+        const bloqueoTime = Date.now() + 2 * 60 * 1000; // 2 minutos de bloqueo
         setBloqueadoHasta(bloqueoTime);
         localStorage.setItem("bloqueadoHasta", bloqueoTime.toString());
         toast.error("Demasiados intentos fallidos. Cuenta bloqueada por 2 minutos.");
@@ -112,7 +121,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="min-h-screen flex flex-col">
       <div className="bg-[#e6f0ff] p-8 flex flex-col items-center justify-center">
         <div className="mb-4">
           <Image
@@ -120,19 +129,19 @@ export default function LoginPage() {
             alt="Logo Jack's"
             width={300}
             height={150}
-            className="h-auto max-w-full drop-shadow-lg"
+            className="drop-shadow-lg max-w-full h-auto"
             priority
           />
         </div>
-        <h2 className="text-xl font-semibold text-center text-gray-800 md:text-2xl">
+        <h2 className="text-xl md:text-2xl font-semibold text-gray-800 text-center">
           App Jack&apos;s - Compra desde donde tú quieras
         </h2>
       </div>
 
-      <div className="flex items-center justify-center flex-grow p-4 overflow-y-auto bg-white">
+      <div className="flex-grow flex items-center justify-center p-4 overflow-y-auto bg-white">
         <div className="w-full max-w-[320px] space-y-4">
           {bloqueadoHasta ? (
-            <div className="font-semibold text-center text-red-600">
+            <div className="text-center text-red-600 font-semibold">
               Cuenta bloqueada. Espera {tiempoRestante} segundos.
             </div>
           ) : (

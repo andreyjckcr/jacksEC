@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
 
     const user = await prisma.usuarios_ecommerce.findUnique({
       where: { codigo_empleado: codigoEmpleado },
-      select: { id: true, nombre: true, correo: true, codigo_empleado: true },
+      select: { id: true, nombre: true, correo: true },
     });
 
     if (!user) {
@@ -132,8 +132,7 @@ export async function POST(req: NextRequest) {
       userId,
       "Despachador",
       "En tienda",
-      new Date(),
-      user.codigo_empleado
+      new Date()
     );
 
     // 🗂️ Convertir PDF Base64 a Buffer

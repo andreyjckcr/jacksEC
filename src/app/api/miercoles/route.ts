@@ -13,18 +13,6 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }
 
-  const ahora = new Date();
-  const dia = ahora.getDay();     // 3 = miércoles
-  const hora = ahora.getHours();  // 0 - 23
-
-  if (dia === 1 && hora < 23) {
-    console.log("⛔ Bloqueado: acceso restringido durante el miércoles hasta las 11:00 PM");
-    return NextResponse.json(
-      { error: "Esta funcionalidad está deshabilitada los miércoles hasta las 11:00 PM" },
-      { status: 403 }
-    );
-  }
-
   try {
     console.log(`🔍 Buscando pedidos para usuario ID: ${session.user.id}`);
 

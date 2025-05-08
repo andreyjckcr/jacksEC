@@ -11,8 +11,7 @@ export async function generateInvoicePDF(
   userId: number,
   userAgent: string | undefined,
   location: string,
-  fechaCompra: Date,
-  employeeCode: string 
+  fechaCompra: Date
 ) {
   try {
     const pdfDoc = await PDFDocument.create();
@@ -55,8 +54,6 @@ export async function generateInvoicePDF(
 
     yOffset -= 15;
     page.drawText(`${userName}`, { x: 20, y: yOffset, size: 10, font: fontBold });
-    yOffset -= 15;
-    page.drawText(`${employeeCode}`, { x: 20, y: yOffset, size: 10, font: fontBold });
     yOffset -= 15;
     page.drawText(`${location || "Online"}`, { x: 20, y: yOffset, size: 10, font });
 
