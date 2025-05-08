@@ -71,6 +71,7 @@ model productos_ec {
   UnidadCaja          Decimal?              @db.Decimal(18, 0)
   Peso                String?               @db.NVarChar(10)
   Embalaje            String?               @db.NVarChar(10)
+  PrecioUniSIM        Decimal?              @db.Decimal(18, 2)
   carrito_ec          carrito_ec[]
   productos_comprados productos_comprados[]
 }
@@ -97,6 +98,7 @@ model historial_compras_ec {
   estado              String                @db.VarChar(50)
   metodo_pago         String                @default("Deducción de Planilla") @db.NVarChar(100)
   factura_url         String?               @db.NVarChar(255)
+  PrecioUniSIM        Decimal?              @db.Decimal(18, 2)
   usuarios_ecommerce  usuarios_ecommerce    @relation(fields: [id_usuario], references: [id], onUpdate: NoAction, map: "FK__historial__id_us__4F7CD00D")
   productos_comprados productos_comprados[]
 }
@@ -131,7 +133,9 @@ model Producto {
   codigo_articulo String   @db.Char(6)
   fecha           DateTime @db.DateTime
   estado          Int      @db.TinyInt
+  // NUM_PED         String?  @db.NVarChar(15)
   cantidad        Int      @default(1, map: "DF__Producto__cantid__114A936A")
+  transaction_id  String?  @db.VarChar(50)
 
   @@id([codigo_empleado, codigo_articulo, fecha], map: "PK_Producto")
 }

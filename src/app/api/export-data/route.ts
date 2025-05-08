@@ -32,6 +32,7 @@ export async function POST() {
           codigo_empleado: item.codigoEmpleado.slice(0, 20),
           codigo_articulo: item.codigoProducto.slice(0, 6),
           fecha: item.fechaPedido ?? new Date(),
+          transaction_id: item.transactionId,
           cantidad: item.cantidad, // Agregamos la cantidad
           estado: 0, // 0 = pendiente
         })),

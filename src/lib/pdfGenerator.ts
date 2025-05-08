@@ -5,6 +5,7 @@ interface InvoiceData {
   invoiceNumber: string
   device: string
   location: string
+  employeeCode: string
 }
 
 export const generatePDF = (invoiceData: InvoiceData) => {
@@ -16,6 +17,7 @@ Número: ${invoiceData.invoiceNumber}
 Fecha: ${new Date(invoiceData.date).toLocaleString()}
 Ubicación: ${invoiceData.location}
 Dispositivo: ${invoiceData.device}
+Código del Empleado: ${invoiceData.employeeCode}
 
 PRODUCTOS:
 ${invoiceData.items
